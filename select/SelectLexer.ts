@@ -1,6 +1,6 @@
-import {createToken, CstNode, ILexingResult, Lexer, TokenType} from 'chevrotain'
+import {createToken, ILexingResult, Lexer, TokenType} from 'chevrotain'
 
-const Identifier = createToken({name: "Identifier", pattern: /[a-zA-Z]\w*/})
+const Identifier = createToken({name: "Identifier", pattern: /[a-zA-Z]\w*/},)
 const Select = createToken({name: "Select", pattern: /SELECT/, longer_alt: Identifier})
 const From = createToken({name: "From", pattern: /FROM/, longer_alt: Identifier})
 const Where = createToken({name: "Where", pattern: /WHERE/, longer_alt: Identifier})

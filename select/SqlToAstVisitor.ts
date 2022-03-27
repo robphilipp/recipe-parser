@@ -85,13 +85,9 @@ export class SqlToAstVisitor extends BaseSqlVisitor {
 
 const toAstVisitorInstance = new SqlToAstVisitor()
 
-export function toAst(input: string) {
-    const {parserInstance, cst} = parse(input)
-    // automatically creates the CST when parsing
-    // const cst = parseResult.selectStatement()
-
-    const ast = toAstVisitorInstance.visit(cst)
-    return ast
+export function toAst(input: string): SelectSqlAst {
+    const {cst} = parse(input)
+    return toAstVisitorInstance.visit(cst)
 }
 
 /*

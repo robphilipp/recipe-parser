@@ -1,5 +1,4 @@
-import {Lexer} from 'chevrotain'
-import {lex, tokens} from "./select/SelectLexer";
+import {lex} from "./select/SelectLexer";
 import {SelectParser} from "./select/SelectParser";
 
 // const {lexer, tokens} = createSelectLexer()
@@ -8,7 +7,7 @@ const inputText = "SELECT column1 FROM table2"
 
 export const lexingResult = lex(inputText)
 
-const parser = new SelectParser(tokens)
+const parser = new SelectParser()
 parser.input = lexingResult.tokens
 export const cstNode = parser.selectStatement();
 console.log(cstNode)
