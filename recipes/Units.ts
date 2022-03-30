@@ -66,7 +66,7 @@ export const baseUnits: Units = {
         target: UnitType.FLUID_OUNCE
     },
     cup: {
-        synonyms: ['c', 'C', 'cup'],
+        synonyms: ['cp', 'cup'],
         target: UnitType.CUP
     },
     pint: {

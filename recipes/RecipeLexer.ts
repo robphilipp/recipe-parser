@@ -50,17 +50,32 @@ function emptyRegexParts(): RegExpParts {
 }
 
 const regexParts = emptyRegexParts()
-    .add("NaturalNumberPart", "[1-9]\\d*")
-    .add("IntegerPart", "0|[1-9]\\d*")
-    .add("FractionalPart", "\\.\\d+")
-    // .add("NaturalNumberPart", /[1-9]\d*/.source)
-    // .add("IntegerPart", /0|[1-9]\d*/.source)
-    // .add("FractionalPart", /\.\d+/.source)
-    .add("UnitsPart", Object.values(enrichedUnits).flatMap(unitInfo => unitInfo.synonyms.join("|")).join("|"))
+    .add("NaturalNumberPart", /[1-9]\d*/.source)
+    .add("IntegerPart", /0|[1-9]\d*/.source)
+    .add("FractionalPart", /\.\d+/.source)
+    .add("UnitsPart", /(fl oz)|(fluid ounce)|([a-zA-Z]+\.?)/.source)
+    .add("IngredientTextPart", /\s+/.source)
+/* -- ingredients
 
-// const Integer = createToken({name: "Integer", pattern: /0|[1-9]\d*/.source})
-// const Decimal = createToken({name: "Decimal", pattern: /0|[1-9]\d*\.\d+/, longer_alt: Integer})
-// const Fraction = createToken({name: "Fraction", pattern: /(0|[1-9]\d*)\/(0|[1-9]\d*)/, longer_alt: Integer})
+in ABNF (https://matt.might.net/articles/grammars-bnf-ebnf/)
+
+<ingredient> ::= [<item_id> <whitespace>] <amount>
+
+white_space = *( " " / "\t" )
+list_item_id = ( [ "(" ] number [ "." / ")" / ":" ] ) / ( [ "-" / "*" / "•" ])
+
+amount = [modifier] [white_space] quantity [white_space] [unit] [ "." ]
+modifier :== approx / approximately / about / "~" / around
+quantity = number / fraction
+unit = (cup / tsp / tbsp (.... see units in recipes ui))["."]
+
+number = integer / decimal
+integer :: = 0 / (natural_digit *digit)
+decimal :: integer "." 1*digit
+fraction = integer "/" natural_digit *digit
+natural_digit = 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9
+digit = 0 / natural_digit
+ */
 const Integer = createToken({
     name: "Integer",
     pattern: regexParts.regex("{{IntegerPart}}")
@@ -75,17 +90,29 @@ const Fraction = createToken({
     pattern: regexParts.regex("{{IntegerPart}}/{{NaturalNumberPart}}"),
     longer_alt: Integer
 })
+const IngredientText = createToken({
+    name: "IngredientText",
+    pattern: regexParts.regex("{{IngredientTextPart}}")
+})
 const Unit = createToken({
     name: "Unit",
-    pattern: regexParts.regex("{{UnitsPart}}")
+    pattern: regexParts.regex("{{UnitsPart}}"),
+    longer_alt: IngredientText
 })
 const WhiteSpace = createToken({name: "WhiteSpace", pattern: /\s+/, group: Lexer.SKIPPED})
-const ListItemId = createToken({name: "ListItemId", pattern: /(\(?\d+[.):]?)|[*•-]?/, group: Lexer.SKIPPED})
+const ListItemId = createToken({
+    name: "ListItemId",
+    pattern: /(\(?\d+((.\))|[.):]))|[*•-]/,
+    longer_alt: Decimal,
+    // group: Lexer.SKIPPED
+})
 
 // order matters!
 export const recipeTokens = [
     WhiteSpace,
+    ListItemId,
     Fraction, Decimal, Integer,
+    IngredientText,
     Unit
 ]
 
@@ -99,9 +126,10 @@ const RecipeLexer = new Lexer(recipeTokens)
 export function lex(input: string): ILexingResult {
     const result = RecipeLexer.tokenize(input)
 
-    // if(result.errors.length > 0) {
-    //     throw Error(`Failed lexing with errors: ${result.errors.map(error => error.message).join(";")}`)
-    // }
+    if(result.errors.length > 0) {
+        console.warn(`Failed lexing with errors: ${result.errors.map(error => error.message).join(";")}`)
+        // throw Error(`Failed lexing with errors: ${result.errors.map(error => error.message).join(";")}`)
+    }
 
     return result
 }
