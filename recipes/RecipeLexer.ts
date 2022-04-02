@@ -1,5 +1,4 @@
-import {createToken, ILexingResult, Lexer, TokenPattern, TokenType} from 'chevrotain'
-import * as Natural from 'natural'
+import {createToken, ILexingResult, Lexer, TokenType} from 'chevrotain'
 import {baseUnits, phoneticUnits, pluralUnits, UnitInfo} from "./Units";
 import XRegExp from "xregexp";
 import {CustomPatternMatcherReturn} from "@chevrotain/types";
@@ -98,8 +97,6 @@ const IngredientText = createToken({
 const Unit = createToken({
     name: "Unit",
     pattern: unitMatcher,
-    // pattern: regexParts.regex("{{UnitsPart}}"),
-    // longer_alt: IngredientText
     line_breaks: true
 })
 const WhiteSpace = createToken({name: "WhiteSpace", pattern: /\s+/, group: Lexer.SKIPPED})
@@ -107,7 +104,6 @@ const ListItemId = createToken({
     name: "ListItemId",
     pattern: /(\(?\d+((.\))|[.):]))|[*•-]/,
     longer_alt: Decimal,
-    // group: Lexer.SKIPPED
 })
 
 // order matters!
@@ -137,117 +133,104 @@ export function lex(input: string): ILexingResult {
     return result
 }
 
+/**
+ * Attempts to match the units to the current location in the text
+ * @param text The text to search
+ * @param startOffset The current location in the text
+ * @return A pattern matching result if the text matches the unit or null if there is not match
+ */
+function unitMatcher(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+    // try (in order) plural synonyms, singular synonyms, phonetic names
+    const synonym = matchingSynonym(text, startOffset, Object.entries(pluralUnits).concat(Object.entries(baseUnits)))
+    if (synonym !== undefined) {
+        return synonym
+    }
+
+    // try (in order) plural abbreviations, singular abbreviations
+    const abbreviation = matchingAbbreviation(
+        text,
+        startOffset,
+        Object.entries(pluralUnits).concat(Object.entries(baseUnits)),
+    )
+    if (abbreviation !== undefined) {
+        return abbreviation
+    }
+
+    // check phonetics as a last resort
+    const phonetics = matchingSynonym(text, startOffset, Object.entries(phoneticUnits))
+    if (phonetics !== undefined) {
+        return phonetics
+    }
+
+    // no match
+    return null
+}
+
+/**
+ * Attempts to find the synonym that matches the current location in the text
+ * @param text The text to search
+ * @param startOffset The current location in the text
+ * @param units The array `(field_name, unit_info)` pairs
+ * @return A custom pattern match result if found or undefined if not found
+ */
+function matchingSynonym(
+    text: string,
+    startOffset: number,
+    units: Array<[string, UnitInfo]>
+): CustomPatternMatcherReturn | undefined {
+    const synonym = matchingUnit(text, startOffset, units, unit => unit.synonyms)
+    if (synonym !== undefined) {
+        const result: CustomPatternMatcherReturn = [synonym[0]]
+        result.payload = synonym[1][1].target
+        return result
+    }
+    return undefined
+}
+
+/**
+ * Attempts to find the abbreviation that matches the current location in the text
+ * @param text The text to search
+ * @param startOffset The current location in the text
+ * @param units The array `(field_name, unit_info)` pairs
+ * @return A custom pattern match result if found or undefined if not found
+ */
+function matchingAbbreviation(
+    text: string,
+    startOffset: number,
+    units: Array<[string, UnitInfo]>
+): CustomPatternMatcherReturn | undefined {
+    const abbreviation = matchingUnit(text, startOffset, units, unit => unit.abbreviations)
+    if (abbreviation !== undefined) {
+        const result: CustomPatternMatcherReturn = [abbreviation[0]]
+        result.payload = abbreviation[1][1].target
+        return result
+    }
+    return undefined
+}
+
+/**
+ * Attempts to find the matching unit for the current location in the text
+ * @param text The text to search
+ * @param startOffset The current location in the text
+ * @param units The array `(field_name, unit_info)` pairs
+ * @param extractor The extractor for pulling the unit values (synonyms or abbreviations) from the
+ * unit info object.
+ * @return A tuple holding the matched text and the matched unit info
+ */
 function matchingUnit(
     text: string,
     startOffset: number,
-    units: Array<[string, UnitInfo]>,
+    units: Array<[fiedlName: string, info: UnitInfo]>,
     extractor: (unit: UnitInfo) => Array<string>
 ): [matched: string, info: [string, UnitInfo]] | undefined {
     for (let i = 0; i < units.length; ++i) {
         const unitNames = extractor(units[i][1])
-        const name = unitNames.find(syn => text.startsWith(`${syn}${text.length > startOffset + syn.length ? ' ' : ''}`, startOffset))
+        const name = unitNames.find(
+            syn => text.startsWith(`${syn}${text.length > startOffset + syn.length ? ' ' : ''}`, startOffset)
+        )
         if (name !== undefined) {
             return [name, units[i]]
         }
     }
     return undefined
 }
-
-function unitMatcher(text: string, startOffset: number): CustomPatternMatcherReturn | RegExpExecArray | null {
-    // try (in order) plural synonyms, singular synonyms, phonetic names
-    // const synonym = Object.entries(pluralUnits)
-    //     .concat(Object.entries(baseUnits))
-    //     .find(([, info]) => info.synonyms
-    //         .findIndex(syn => text.startsWith(`${syn}${text.length > startOffset + syn.length ? ' ' : ''}`, startOffset)) > -1
-    //         // .findIndex(syn => text.startsWith(`${syn}${text.length > startOffset + syn.length ? ' ' : ''}`, startOffset)) > -1
-    //     )
-    // if (synonym !== undefined) {
-    //     const result: CustomPatternMatcherReturn = [synonym[1].target]
-    //     result.payload = synonym
-    //     return [synonym[1].target]
-    // }
-    const synonym = matchingUnit(
-        text,
-        startOffset,
-        Object.entries(pluralUnits).concat(Object.entries(baseUnits)),
-        unit => unit.synonyms
-    )
-    if (synonym !== undefined) {
-        const result: CustomPatternMatcherReturn = [synonym[0]]
-        result.payload = synonym[1][1].target
-        return result
-    }
-
-    const abbreviation = matchingUnit(
-        text,
-        startOffset,
-        Object.entries(pluralUnits).concat(Object.entries(baseUnits)),
-        unit => unit.abbreviations
-    )
-    if (abbreviation !== undefined) {
-        const result: CustomPatternMatcherReturn = [abbreviation[0]]
-        result.payload = abbreviation[1][1].target
-        return result
-    }
-
-    // // try (in order) plural abbreviations, singular abbreviations
-    // const abbreviation = Object.entries(pluralUnits)
-    //     .concat(Object.entries(baseUnits))
-    //     .find(([, info]) => info.abbreviations
-    //         .findIndex(syn => text.startsWith(`${syn}${text.length > startOffset + syn.length ? ' ' : ''}`, startOffset)) > -1
-    //     )
-    // if (abbreviation !== undefined) {
-    //     return [abbreviation[1].target]
-    // }
-
-    // check phonetics as a last resort
-    const phonetics = matchingUnit(text, startOffset, Object.entries(phoneticUnits), unit => unit.synonyms)
-    if (phonetics !== undefined) {
-        const result: CustomPatternMatcherReturn = [phonetics[0]]
-        result.payload = phonetics[1][1].target
-        return result
-    }
-    // const phonetics = (Object.entries(phoneticUnits))
-    //     .find(([, info]) => info.synonyms
-    //         .findIndex(syn => text.startsWith(`${syn}${text.length > startOffset + syn.length ? ' ' : ''}`, startOffset)) > -1
-    //     )
-    // if (phonetics !== undefined) {
-    //     return [phonetics[1].target]
-    // }
-
-    // no match
-    return null
-}
-// function unitMatcher(text: string, startOffset: number): [matchedString: string] | null {
-//     // try (in order) plural synonyms, singular synonyms, phonetic names
-//     const synonym = Object.entries(pluralUnits)
-//         .concat(Object.entries(baseUnits))
-//         .find(([, info]) => info.synonyms
-//             .findIndex(syn => text.startsWith(`${syn}${text.length > startOffset + syn.length ? ' ' : ''}`, startOffset)) > -1
-//         )
-//     if (synonym !== undefined) {
-//         return [synonym[1].target]
-//     }
-//
-//     // try (in order) plural abbreviations, singular abbreviations
-//     const abbreviation = Object.entries(pluralUnits)
-//         .concat(Object.entries(baseUnits))
-//         .find(([, info]) => info.abbreviations
-//             .findIndex(syn => text.startsWith(`${syn}${text.length > startOffset + syn.length ? ' ' : ''}`, startOffset)) > -1
-//         )
-//     if (abbreviation !== undefined) {
-//         return [abbreviation[1].target]
-//     }
-//
-//     // check phonetics as a last resort
-//     const phonetics = (Object.entries(phoneticUnits))
-//         .find(([, info]) => info.synonyms
-//             .findIndex(syn => text.startsWith(`${syn}${text.length > startOffset + syn.length ? ' ' : ''}`, startOffset)) > -1
-//         )
-//     if (phonetics !== undefined) {
-//         return [phonetics[1].target]
-//     }
-//
-//     // no match
-//     return null
-// }
