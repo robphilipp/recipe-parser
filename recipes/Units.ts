@@ -1,6 +1,7 @@
 import * as Natural from "natural";
 
 type UnitInfo = {
+    abbreviations: Array<string>
     synonyms: Array<string>
     target: UnitType
 }
@@ -20,91 +21,119 @@ export const baseUnits: Units = {
      | mass
      */
     milligram: {
-        synonyms: ['mg', 'milligram'],
+        abbreviations: ['mg'],
+        synonyms: ['milligram'],
         target: UnitType.MILLIGRAM
     },
     gram: {
-        synonyms: ['g', 'gram'],
+        abbreviations: ['g'],
+        synonyms: ['gram'],
         target: UnitType.GRAM
     },
     kilogram: {
-        synonyms: ['kg', 'kilo', 'kilogram'],
+        abbreviations: ['kg'],
+        synonyms: ['kilo', 'kilogram'],
         target: UnitType.KILOGRAM
     },
     /*
      | weight
      */
     ounce: {
-        synonyms: ['oz', 'ounce'],
+        abbreviations: ['oz'],
+        synonyms: ['ounce'],
         target: UnitType.OUNCE
     },
     pound: {
-        synonyms: ['lb', 'pound'],
+        abbreviations: ['lb'],
+        synonyms: ['pound'],
         target: UnitType.POUND
     },
     /*
      | volume
      */
     milliliter: {
-        synonyms: ['ml', 'milliliter'],
+        abbreviations: ['ml'],
+        synonyms: ['milliliter'],
         target: UnitType.MILLILITER
     },
     liter: {
-        synonyms: ['l', 'litre', 'liter'],
+        abbreviations: ['l'],
+        synonyms: ['litre', 'liter'],
         target: UnitType.LITER
     },
     teaspoon: {
-        synonyms: ['tsp', 'tspn', 'teaspoon'],
+        abbreviations: ['tsp', 'tspn'],
+        synonyms: ['teaspoon'],
         target: UnitType.TEASPOON
     },
     tablespoon: {
-        synonyms: ['tbsp', 'tbspn', 'tablespoon'],
+        abbreviations: ['tbsp', 'tbspn'],
+        synonyms: ['tablespoon'],
         target: UnitType.TABLESPOON
     },
     fluid_ounce: {
-        synonyms: ['floz', 'fl oz', 'fluid ounce'],
+        abbreviations: ['floz', 'fl oz'],
+        synonyms: ['fluid ounce'],
         target: UnitType.FLUID_OUNCE
     },
     cup: {
-        synonyms: ['cp', 'cup'],
+        abbreviations: ['cp'],
+        synonyms: ['cup'],
         target: UnitType.CUP
     },
     pint: {
-        synonyms: ['pt', 'pint'],
+        abbreviations: ['pt'],
+        synonyms: ['pint'],
         target: UnitType.PINT
     },
     quart: {
-        synonyms: ['qt', 'quart'],
+        abbreviations: ['qt'],
+        synonyms: ['quart'],
         target: UnitType.QUART
     },
     gallon: {
-        synonyms: ['gl', 'gal', 'gallon'],
+        abbreviations: ['gl', 'gal'],
+        synonyms: ['gallon'],
         target: UnitType.GALLON
     },
     /*
      | misc
      */
     piece: {
-        synonyms: ['pce', 'piece', 'pkg', 'package'],
+        abbreviations: ['pce', 'pkg'],
+        synonyms: ['piece', 'package'],
         target: UnitType.PIECE
     },
     pinch: {
-        synonyms: ['pnch', 'pinch'],
+        abbreviations: ['pnch'],
+        synonyms: ['pinch'],
         target: UnitType.PINCH
     }
 }
 
 // const stemmer = Natural.PorterStemmer
 const inflector = new Natural.NounInflector()
+const phonetics = Natural.Metaphone
 
 // for each of the synonyms, add its plural form
-export const enrichedUnits: Units = Object.entries(baseUnits).reduce((obj, [name, info]) => {
-    const synonyms: Array<string> = info.synonyms.reduce(
-        (expanded, synonym) => [
-            ...expanded,
-            synonym,
-            inflector.pluralize(synonym),
-        ], new Array<string>()
-    )
-    return {...obj, [name]: {synonyms, target: info.target}}
-}, {} as Units)
+export const pluralUnits: Units = Object.entries(baseUnits).reduce((obj, [name, info]) => ({
+        ...obj,
+        [name]: {
+            abbreviations: info.abbreviations.map(abbr => inflector.pluralize(abbr)),
+            synonyms: info.synonyms.map(syn => inflector.pluralize(syn)),
+            target: info.target
+        }
+    }),
+    {} as Units
+)
+
+export const phoneticUnits: Units = Object.entries(baseUnits).reduce((obj, [name, info]) => ({
+        ...obj,
+        [name]: {
+            abbreviations: info.abbreviations,
+            synonyms: info.synonyms.map(syn => phonetics.process(syn)),
+            target: info.target
+        }
+    }),
+    {} as Units
+)

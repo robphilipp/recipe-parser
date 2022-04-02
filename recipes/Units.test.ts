@@ -1,8 +1,8 @@
-import {enrichedUnits, UnitType} from "./Units";
+import {pluralUnits, UnitType} from "./Units";
 
 describe("when expanding the base units", () => {
     it("should add plurals", () => {
-        expect(enrichedUnits.liter.synonyms).toEqual(['l', 'ls', 'litre', 'litres', 'liter', 'liters'])
-        expect(enrichedUnits.liter.target).toBe(UnitType.LITER)
+        expect(pluralUnits.liter.synonyms).toEqual(['l', 'ls', 'litre', 'litres', 'liter', 'liters'])
+        expect(pluralUnits.liter.target).toBe(UnitType.LITER)
     })
 })

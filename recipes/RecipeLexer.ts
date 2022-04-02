@@ -1,6 +1,6 @@
 import {createToken, ILexingResult, Lexer, TokenType} from 'chevrotain'
 import * as Natural from 'natural'
-import {enrichedUnits} from "./Units";
+import {baseUnits, phoneticUnits, pluralUnits} from "./Units";
 import XRegExp from "xregexp";
 
 /* -- ingredients
@@ -34,7 +34,7 @@ type RegExpParts = {
 function emptyRegexParts(): RegExpParts {
     return {
         fragments: {},
-        add: function(this: RegExpParts, partName: string, pattern: string): RegExpParts {
+        add: function (this: RegExpParts, partName: string, pattern: string): RegExpParts {
             return {
                 ...this,
                 fragments: {
@@ -43,7 +43,7 @@ function emptyRegexParts(): RegExpParts {
                 }
             }
         },
-        regex: function(this: RegExpParts, partName: string, flags?: string): RegExp {
+        regex: function (this: RegExpParts, partName: string, flags?: string): RegExp {
             return XRegExp.build(partName, this.fragments, flags)
         }
     }
@@ -54,7 +54,7 @@ const regexParts = emptyRegexParts()
     .add("IntegerPart", /0|[1-9]\d*/.source)
     .add("FractionalPart", /\.\d+/.source)
     .add("UnitsPart", /(fl oz)|(fluid ounce)|([a-zA-Z]+\.?)/.source)
-    .add("IngredientTextPart", /\s+/.source)
+    .add("IngredientTextPart", /[a-zA-Z]+/.source)
 /* -- ingredients
 
 in ABNF (https://matt.might.net/articles/grammars-bnf-ebnf/)
@@ -96,8 +96,10 @@ const IngredientText = createToken({
 })
 const Unit = createToken({
     name: "Unit",
-    pattern: regexParts.regex("{{UnitsPart}}"),
-    longer_alt: IngredientText
+    pattern: unitMatcher,
+    // pattern: regexParts.regex("{{UnitsPart}}"),
+    // longer_alt: IngredientText
+    line_breaks: true
 })
 const WhiteSpace = createToken({name: "WhiteSpace", pattern: /\s+/, group: Lexer.SKIPPED})
 const ListItemId = createToken({
@@ -112,24 +114,50 @@ export const recipeTokens = [
     WhiteSpace,
     ListItemId,
     Fraction, Decimal, Integer,
-    IngredientText,
-    Unit
+    Unit,
+    IngredientText
 ]
 
 export const recipeTokenVocabulary = recipeTokens.reduce((vocab, token) => {
     vocab[token.name] = token
     return vocab
-}, {} as {[key: string]: TokenType})
+}, {} as { [key: string]: TokenType })
 
 const RecipeLexer = new Lexer(recipeTokens)
 
 export function lex(input: string): ILexingResult {
     const result = RecipeLexer.tokenize(input)
 
-    if(result.errors.length > 0) {
+    if (result.errors.length > 0) {
         console.warn(`Failed lexing with errors: ${result.errors.map(error => error.message).join(";")}`)
         // throw Error(`Failed lexing with errors: ${result.errors.map(error => error.message).join(";")}`)
     }
 
     return result
+}
+
+function unitMatcher(text: string, startOffset: number): [matchedString: string] | null {
+    // try (in order) plural synonyms, singular synonyms, phonetic names
+    const synonym = Object.entries(pluralUnits)
+        .concat(Object.entries(baseUnits))
+        .concat(Object.entries(phoneticUnits))
+        .find(([, info]) => info.synonyms
+            .findIndex(syn => text.startsWith(`${syn}${text.length > startOffset + syn.length ? ' ' : ''}`, startOffset)) > -1
+        )
+    if (synonym !== undefined) {
+        return [synonym[1].target]
+    }
+
+    // try (in order) plural abbreviations, singular abbreviations
+    const abbreviation = Object.entries(pluralUnits)
+        .concat(Object.entries(baseUnits))
+        .find(([, info]) => info.abbreviations
+            .findIndex(syn => text.startsWith(`${syn}${text.length > startOffset + syn.length ? ' ' : ''}`, startOffset)) > -1
+        )
+    if (abbreviation !== undefined) {
+        return [abbreviation[1].target]
+    }
+
+    // no match
+    return null
 }
