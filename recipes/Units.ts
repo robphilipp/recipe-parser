@@ -1,6 +1,6 @@
 import * as Natural from "natural";
 
-type UnitInfo = {
+export type UnitInfo = {
     abbreviations: Array<string>
     synonyms: Array<string>
     target: UnitType
@@ -113,7 +113,9 @@ export const baseUnits: Units = {
 
 // const stemmer = Natural.PorterStemmer
 const inflector = new Natural.NounInflector()
-const phonetics = Natural.Metaphone
+// const phonetics = Natural.SoundEx
+// const phonetics = Natural.Metaphone
+const phonetics = Natural.DoubleMetaphone
 
 // for each of the synonyms, add its plural form
 export const pluralUnits: Units = Object.entries(baseUnits).reduce((obj, [name, info]) => ({
@@ -131,7 +133,8 @@ export const phoneticUnits: Units = Object.entries(baseUnits).reduce((obj, [name
         ...obj,
         [name]: {
             abbreviations: info.abbreviations,
-            synonyms: info.synonyms.map(syn => phonetics.process(syn)),
+            synonyms: info.synonyms.map(syn => phonetics.process(syn)[0].toLocaleLowerCase()),
+            // synonyms: info.synonyms.map(syn => phonetics.process(syn).toLocaleLowerCase()),
             target: info.target
         }
     }),

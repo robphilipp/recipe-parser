@@ -1,7 +1,8 @@
-import {createToken, ILexingResult, Lexer, TokenType} from 'chevrotain'
+import {createToken, ILexingResult, Lexer, TokenPattern, TokenType} from 'chevrotain'
 import * as Natural from 'natural'
-import {baseUnits, phoneticUnits, pluralUnits} from "./Units";
+import {baseUnits, phoneticUnits, pluralUnits, UnitInfo} from "./Units";
 import XRegExp from "xregexp";
+import {CustomPatternMatcherReturn} from "@chevrotain/types";
 
 /* -- ingredients
 
@@ -136,28 +137,117 @@ export function lex(input: string): ILexingResult {
     return result
 }
 
-function unitMatcher(text: string, startOffset: number): [matchedString: string] | null {
+function matchingUnit(
+    text: string,
+    startOffset: number,
+    units: Array<[string, UnitInfo]>,
+    extractor: (unit: UnitInfo) => Array<string>
+): [matched: string, info: [string, UnitInfo]] | undefined {
+    for (let i = 0; i < units.length; ++i) {
+        const unitNames = extractor(units[i][1])
+        const name = unitNames.find(syn => text.startsWith(`${syn}${text.length > startOffset + syn.length ? ' ' : ''}`, startOffset))
+        if (name !== undefined) {
+            return [name, units[i]]
+        }
+    }
+    return undefined
+}
+
+function unitMatcher(text: string, startOffset: number): CustomPatternMatcherReturn | RegExpExecArray | null {
     // try (in order) plural synonyms, singular synonyms, phonetic names
-    const synonym = Object.entries(pluralUnits)
-        .concat(Object.entries(baseUnits))
-        .concat(Object.entries(phoneticUnits))
-        .find(([, info]) => info.synonyms
-            .findIndex(syn => text.startsWith(`${syn}${text.length > startOffset + syn.length ? ' ' : ''}`, startOffset)) > -1
-        )
+    // const synonym = Object.entries(pluralUnits)
+    //     .concat(Object.entries(baseUnits))
+    //     .find(([, info]) => info.synonyms
+    //         .findIndex(syn => text.startsWith(`${syn}${text.length > startOffset + syn.length ? ' ' : ''}`, startOffset)) > -1
+    //         // .findIndex(syn => text.startsWith(`${syn}${text.length > startOffset + syn.length ? ' ' : ''}`, startOffset)) > -1
+    //     )
+    // if (synonym !== undefined) {
+    //     const result: CustomPatternMatcherReturn = [synonym[1].target]
+    //     result.payload = synonym
+    //     return [synonym[1].target]
+    // }
+    const synonym = matchingUnit(
+        text,
+        startOffset,
+        Object.entries(pluralUnits).concat(Object.entries(baseUnits)),
+        unit => unit.synonyms
+    )
     if (synonym !== undefined) {
-        return [synonym[1].target]
+        const result: CustomPatternMatcherReturn = [synonym[0]]
+        result.payload = synonym[1][1].target
+        return result
     }
 
-    // try (in order) plural abbreviations, singular abbreviations
-    const abbreviation = Object.entries(pluralUnits)
-        .concat(Object.entries(baseUnits))
-        .find(([, info]) => info.abbreviations
-            .findIndex(syn => text.startsWith(`${syn}${text.length > startOffset + syn.length ? ' ' : ''}`, startOffset)) > -1
-        )
+    const abbreviation = matchingUnit(
+        text,
+        startOffset,
+        Object.entries(pluralUnits).concat(Object.entries(baseUnits)),
+        unit => unit.abbreviations
+    )
     if (abbreviation !== undefined) {
-        return [abbreviation[1].target]
+        const result: CustomPatternMatcherReturn = [abbreviation[0]]
+        result.payload = abbreviation[1][1].target
+        return result
     }
+
+    // // try (in order) plural abbreviations, singular abbreviations
+    // const abbreviation = Object.entries(pluralUnits)
+    //     .concat(Object.entries(baseUnits))
+    //     .find(([, info]) => info.abbreviations
+    //         .findIndex(syn => text.startsWith(`${syn}${text.length > startOffset + syn.length ? ' ' : ''}`, startOffset)) > -1
+    //     )
+    // if (abbreviation !== undefined) {
+    //     return [abbreviation[1].target]
+    // }
+
+    // check phonetics as a last resort
+    const phonetics = matchingUnit(text, startOffset, Object.entries(phoneticUnits), unit => unit.synonyms)
+    if (phonetics !== undefined) {
+        const result: CustomPatternMatcherReturn = [phonetics[0]]
+        result.payload = phonetics[1][1].target
+        return result
+    }
+    // const phonetics = (Object.entries(phoneticUnits))
+    //     .find(([, info]) => info.synonyms
+    //         .findIndex(syn => text.startsWith(`${syn}${text.length > startOffset + syn.length ? ' ' : ''}`, startOffset)) > -1
+    //     )
+    // if (phonetics !== undefined) {
+    //     return [phonetics[1].target]
+    // }
 
     // no match
     return null
 }
+// function unitMatcher(text: string, startOffset: number): [matchedString: string] | null {
+//     // try (in order) plural synonyms, singular synonyms, phonetic names
+//     const synonym = Object.entries(pluralUnits)
+//         .concat(Object.entries(baseUnits))
+//         .find(([, info]) => info.synonyms
+//             .findIndex(syn => text.startsWith(`${syn}${text.length > startOffset + syn.length ? ' ' : ''}`, startOffset)) > -1
+//         )
+//     if (synonym !== undefined) {
+//         return [synonym[1].target]
+//     }
+//
+//     // try (in order) plural abbreviations, singular abbreviations
+//     const abbreviation = Object.entries(pluralUnits)
+//         .concat(Object.entries(baseUnits))
+//         .find(([, info]) => info.abbreviations
+//             .findIndex(syn => text.startsWith(`${syn}${text.length > startOffset + syn.length ? ' ' : ''}`, startOffset)) > -1
+//         )
+//     if (abbreviation !== undefined) {
+//         return [abbreviation[1].target]
+//     }
+//
+//     // check phonetics as a last resort
+//     const phonetics = (Object.entries(phoneticUnits))
+//         .find(([, info]) => info.synonyms
+//             .findIndex(syn => text.startsWith(`${syn}${text.length > startOffset + syn.length ? ' ' : ''}`, startOffset)) > -1
+//         )
+//     if (phonetics !== undefined) {
+//         return [phonetics[1].target]
+//     }
+//
+//     // no match
+//     return null
+// }
