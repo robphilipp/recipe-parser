@@ -12,6 +12,12 @@ import {fractionFromUnicode, isValidFraction} from "./Numbers";
  * Use the {@link newRegexParts} factory function to create a new {@link RegExpParts}
  * object.
  *
+ * @interface RegExpParts
+ * @property fragments Holds the fragments that can be used to generate regular and combine
+ * regular expressions.
+ * @property add Method for adding a new pattern.
+ * @property regex Method that returns the regular expression for the specified pattern name
+ *
  * @see newRegexParts
  */
 type RegExpParts = {
