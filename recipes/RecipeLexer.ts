@@ -55,7 +55,7 @@ const regexParts = emptyRegexParts()
     .add("IntegerPart", /0|[1-9]\d*/.source)
     .add("FractionalPart", /\.\d+/.source)
     .add("UnitsPart", /(fl oz)|(fluid ounce)|([a-zA-Z]+\.?)/.source)
-    .add("IngredientTextPart", /[a-zA-Z]+/.source)
+    .add("WordPart", /[a-zA-Z]+/.source)
 /* -- ingredients
 
 in ABNF (https://matt.might.net/articles/grammars-bnf-ebnf/)
@@ -70,12 +70,13 @@ modifier :== approx / approximately / about / "~" / around
 quantity = number / fraction
 unit = (cup / tsp / tbsp (.... see units in recipes ui))["."]
 
-number = integer / decimal
+number = integer / decimal / (integer unicode_fraction)
 integer :: = 0 / (natural_digit *digit)
 decimal :: integer "." 1*digit
 fraction = integer "/" natural_digit *digit
 natural_digit = 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9
 digit = 0 / natural_digit
+unicode_fraction = \u00BC | \u00BD | \u00BE | ...
  */
 const Integer = createToken({
     name: "Integer",
@@ -96,9 +97,9 @@ const UnicodeFraction = createToken({
     pattern: matchUnicodeFraction,
     line_breaks: false
 })
-const IngredientText = createToken({
+const Word = createToken({
     name: "IngredientText",
-    pattern: regexParts.regex("{{IngredientTextPart}}")
+    pattern: regexParts.regex("{{WordPart}}")
 })
 const Unit = createToken({
     name: "Unit",
@@ -118,7 +119,7 @@ export const recipeTokens = [
     ListItemId,
     UnicodeFraction, Fraction, Decimal, Integer,
     Unit,
-    IngredientText
+    Word
 ]
 
 export const recipeTokenVocabulary = recipeTokens.reduce((vocab, token) => {
@@ -140,12 +141,28 @@ export function lex(input: string): ILexingResult {
 }
 
 /**
- *
- * @param text
- * @param startOffset
+ * Attempts to match [unicode fractions](https://www.compart.com/en/unicode/decomposition/%3Cfraction%3E).
+ * @param text The total text to parse
+ * @param startOffset The lexer's current position (offset) in the text
+ * @return The match, with the payload set to the {@link Fraction} numerator and denominator; or `null`
+ * if the unicode character at the current position is not a "vulgar fraction"
  */
 function matchUnicodeFraction(text: string, startOffset: number): CustomPatternMatcherReturn | null {
     const currentChar = text.charAt(startOffset)
+    const integerMatch = text.match(/0|[1-9]\d*\s*/)
+    if (integerMatch !== null) {
+        const integer = integerMatch[0]
+        // plus 1 for the space
+        const nextChar = text.charAt(startOffset + integer.length)
+
+        const [numerator, denominator] = fractionFromUnicode(nextChar)
+        if (isValidFraction([numerator, denominator])) {
+            // const result: CustomPatternMatcherReturn = [`${currentChar} ${nextChar}`]
+            const result: CustomPatternMatcherReturn = [text.slice(startOffset, startOffset + integer.length + 1)]
+            result.payload = [parseInt(currentChar.trim()) * denominator + numerator, denominator]
+            return result
+        }
+    }
 
     const [numerator, denominator] = fractionFromUnicode(currentChar)
     if (isValidFraction([numerator, denominator])) {
