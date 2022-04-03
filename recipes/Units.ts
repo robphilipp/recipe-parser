@@ -111,10 +111,7 @@ export const baseUnits: Units = {
     }
 }
 
-// const stemmer = Natural.PorterStemmer
 const inflector = new Natural.NounInflector()
-// const phonetics = Natural.SoundEx
-// const phonetics = Natural.Metaphone
 const phonetics = Natural.DoubleMetaphone
 
 // for each of the synonyms, add its plural form
@@ -134,7 +131,6 @@ export const phoneticUnits: Units = Object.entries(baseUnits).reduce((obj, [name
         [name]: {
             abbreviations: info.abbreviations,
             synonyms: info.synonyms.map(syn => phonetics.process(syn)[0].toLocaleLowerCase()),
-            // synonyms: info.synonyms.map(syn => phonetics.process(syn).toLocaleLowerCase()),
             target: info.target
         }
     }),

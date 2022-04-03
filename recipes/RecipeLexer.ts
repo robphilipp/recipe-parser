@@ -2,6 +2,7 @@ import {createToken, ILexingResult, Lexer, TokenType} from 'chevrotain'
 import {baseUnits, phoneticUnits, pluralUnits, UnitInfo} from "./Units";
 import XRegExp from "xregexp";
 import {CustomPatternMatcherReturn} from "@chevrotain/types";
+import {fractionFromUnicode, isValidFraction} from "./Numbers";
 
 /* -- ingredients
 
@@ -90,6 +91,11 @@ const Fraction = createToken({
     pattern: regexParts.regex("{{IntegerPart}}/{{NaturalNumberPart}}"),
     longer_alt: Integer
 })
+const UnicodeFraction = createToken({
+    name: "UnicodeFraction",
+    pattern: matchUnicodeFraction,
+    line_breaks: false
+})
 const IngredientText = createToken({
     name: "IngredientText",
     pattern: regexParts.regex("{{IngredientTextPart}}")
@@ -110,7 +116,7 @@ const ListItemId = createToken({
 export const recipeTokens = [
     WhiteSpace,
     ListItemId,
-    Fraction, Decimal, Integer,
+    UnicodeFraction, Fraction, Decimal, Integer,
     Unit,
     IngredientText
 ]
@@ -131,6 +137,23 @@ export function lex(input: string): ILexingResult {
     }
 
     return result
+}
+
+/**
+ *
+ * @param text
+ * @param startOffset
+ */
+function matchUnicodeFraction(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+    const currentChar = text.charAt(startOffset)
+
+    const [numerator, denominator] = fractionFromUnicode(currentChar)
+    if (isValidFraction([numerator, denominator])) {
+        const result: CustomPatternMatcherReturn = [currentChar]
+        result.payload = [numerator, denominator]
+        return result
+    }
+    return null
 }
 
 /**
