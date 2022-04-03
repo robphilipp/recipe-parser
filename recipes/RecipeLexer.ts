@@ -4,35 +4,41 @@ import XRegExp from "xregexp";
 import {CustomPatternMatcherReturn} from "@chevrotain/types";
 import {fractionFromUnicode, isValidFraction} from "./Numbers";
 
-/* -- ingredients
-
-in ABNF (https://matt.might.net/articles/grammars-bnf-ebnf/)
-
-<ingredient> ::= [<item_id> <whitespace>] <amount>
-
-white_space = *( " " / "\t" )
-list_item_id = ( [ "(" ] number [ "." / ")" / ":" ] ) / ( [ "-" / "*" / "•" ])
-
-amount = [modifier] [white_space] quantity [white_space] [unit] [ "." ]
-modifier :== approx / approximately / about / "~" / around
-quantity = number / fraction
-unit = (cup / tsp / tbsp (.... see units in recipes ui))["."]
-
-number = integer / decimal
-integer :: = 0 / (natural_digit *digit)
-decimal :: integer "." 1*digit
-fraction = integer "/" natural_digit *digit
-natural_digit = 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9
-digit = 0 / natural_digit
+/**
+ * Immutable.
+ *
+ * Type for managing the regular expression parts for using {@link XRegExp}.
+ *
+ * Use the {@link newRegexParts} factory function to create a new {@link RegExpParts}
+ * object.
+ *
+ * @see newRegexParts
  */
-
 type RegExpParts = {
-    fragments: Record<string, XRegExp.Pattern>
+    /**
+     * Holds the fragments that can be used to generate regular and combine
+     * regular expressions.
+     */
+    readonly fragments: Record<string, XRegExp.Pattern>
+    /**
+     * Method for adding a new pattern to the fragments
+     * @param partName The name of the new pattern
+     * @param pattern The regex pattern string
+     * @return A new {@link RegExpParts} object
+     */
     add: (partName: string, pattern: string) => RegExpParts
+    /**
+     * Returns the regular expression associated with the pattern name
+     * @param partName The name of the pattern
+     * @return A regular expression
+     */
     regex: (partName: string) => RegExp
 }
 
-function emptyRegexParts(): RegExpParts {
+/**
+ * Creates a new (empty) {@link RegExpParts} object
+ */
+function newRegexParts(): RegExpParts {
     return {
         fragments: {},
         add: function (this: RegExpParts, partName: string, pattern: string): RegExpParts {
@@ -50,7 +56,7 @@ function emptyRegexParts(): RegExpParts {
     }
 }
 
-const regexParts = emptyRegexParts()
+const regexParts = newRegexParts()
     .add("NaturalNumberPart", /[1-9]\d*/.source)
     .add("IntegerPart", /0|[1-9]\d*/.source)
     .add("FractionalPart", /\.\d+/.source)
@@ -113,7 +119,9 @@ const ListItemId = createToken({
     longer_alt: Decimal,
 })
 
-// order matters!
+/**
+ * Holds the tokens used to parse the recipe. **Note** that the *order* in which these appear *matters*.
+ */
 export const recipeTokens = [
     WhiteSpace,
     ListItemId,
@@ -129,6 +137,11 @@ export const recipeTokenVocabulary = recipeTokens.reduce((vocab, token) => {
 
 const RecipeLexer = new Lexer(recipeTokens)
 
+/**
+ * Converts the input text into a lexing result that can be parsed into an AST or CST.
+ * @param input The input string
+ * @return The {@link ILexingResult} object holding the result of the lexing operation
+ */
 export function lex(input: string): ILexingResult {
     const result = RecipeLexer.tokenize(input)
 
