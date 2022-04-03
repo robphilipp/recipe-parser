@@ -148,7 +148,11 @@ export function lex(input: string): ILexingResult {
  * if the unicode character at the current position is not a "vulgar fraction"
  */
 function matchUnicodeFraction(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+    // the character at the current lexer position
     const currentChar = text.charAt(startOffset)
+
+    // when the number has an integer and a unicode fraction (e.g. 1¼ or 1 ¼), then parse them into
+    // that same token. we attempt to match an integer part (plus trailing whitespace)
     const integerMatch = text.match(/0|[1-9]\d*\s*/)
     if (integerMatch !== null) {
         const integer = integerMatch[0]
@@ -157,19 +161,21 @@ function matchUnicodeFraction(text: string, startOffset: number): CustomPatternM
 
         const [numerator, denominator] = fractionFromUnicode(nextChar)
         if (isValidFraction([numerator, denominator])) {
-            // const result: CustomPatternMatcherReturn = [`${currentChar} ${nextChar}`]
             const result: CustomPatternMatcherReturn = [text.slice(startOffset, startOffset + integer.length + 1)]
             result.payload = [parseInt(currentChar.trim()) * denominator + numerator, denominator]
             return result
         }
     }
 
+    // maybe it's just a unicode character
     const [numerator, denominator] = fractionFromUnicode(currentChar)
     if (isValidFraction([numerator, denominator])) {
         const result: CustomPatternMatcherReturn = [currentChar]
         result.payload = [numerator, denominator]
         return result
     }
+
+    // nope, not a match
     return null
 }
 
