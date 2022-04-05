@@ -1,4 +1,11 @@
 {
+  "name": "recipe-parser",
+  "version": "0.0.1",
+  "description": "Recipe Parser",
+  "author": "Rob Philipp",
+  "homepage": "https://github.com/robphilipp/recipe-parser",
+  "license": "MIT",
+  "repository": "github:robphilipp/recipe-parser",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
