@@ -1,73 +1,10 @@
 import {createToken, ILexingResult, Lexer, TokenType} from 'chevrotain'
 import {baseUnits, phoneticUnits, pluralUnits, UnitInfo} from "./Units";
-import XRegExp from "xregexp";
 import {CustomPatternMatcherReturn} from "@chevrotain/types";
 import {fractionFromUnicode, isValidFraction} from "./Numbers";
+import {regexParts} from "./RegExpParts";
 
-/**
- * Immutable.
- *
- * Type for managing the regular expression parts for using {@link XRegExp}.
- *
- * Use the {@link newRegexParts} factory function to create a new {@link RegExpParts}
- * object.
- *
- * @interface RegExpParts
- * @property fragments Holds the fragments that can be used to generate regular and combine
- * regular expressions.
- * @property add Method for adding a new pattern.
- * @property regex Method that returns the regular expression for the specified pattern name
- *
- * @see newRegexParts
- */
-type RegExpParts = {
-    /**
-     * Holds the fragments that can be used to generate regular and combine
-     * regular expressions.
-     */
-    readonly fragments: Record<string, XRegExp.Pattern>
-    /**
-     * Method for adding a new pattern to the fragments
-     * @param partName The name of the new pattern
-     * @param pattern The regex pattern string
-     * @return A new {@link RegExpParts} object
-     */
-    add: (partName: string, pattern: string) => RegExpParts
-    /**
-     * Returns the regular expression associated with the pattern name
-     * @param partName The name of the pattern
-     * @return A regular expression
-     */
-    regex: (partName: string) => RegExp
-}
 
-/**
- * Creates a new (empty) {@link RegExpParts} object
- */
-function newRegexParts(): RegExpParts {
-    return {
-        fragments: {},
-        add: function (this: RegExpParts, partName: string, pattern: string): RegExpParts {
-            return {
-                ...this,
-                fragments: {
-                    ...this.fragments,
-                    [partName]: XRegExp.build(pattern, this.fragments)
-                }
-            }
-        },
-        regex: function (this: RegExpParts, partName: string, flags?: string): RegExp {
-            return XRegExp.build(partName, this.fragments, flags)
-        }
-    }
-}
-
-const regexParts = newRegexParts()
-    .add("NaturalNumberPart", /[1-9]\d*/.source)
-    .add("IntegerPart", /0|[1-9]\d*/.source)
-    .add("FractionalPart", /\.\d+/.source)
-    .add("UnitsPart", /(fl oz)|(fluid ounce)|([a-zA-Z]+\.?)/.source)
-    .add("WordPart", /[a-zA-Z]+/.source)
 /* -- ingredients
 
 in ABNF (https://matt.might.net/articles/grammars-bnf-ebnf/)
@@ -110,7 +47,7 @@ const UnicodeFraction = createToken({
     line_breaks: false
 })
 const Word = createToken({
-    name: "IngredientText",
+    name: "Word",
     pattern: regexParts.regex("{{WordPart}}")
 })
 const Unit = createToken({
@@ -118,21 +55,33 @@ const Unit = createToken({
     pattern: unitMatcher,
     line_breaks: true
 })
-const WhiteSpace = createToken({name: "WhiteSpace", pattern: /\s+/, group: Lexer.SKIPPED})
+const WhiteSpace = createToken({
+    name: "WhiteSpace",
+    // pattern: /\s+/,
+    pattern: regexParts.regex("{{WhiteSpace}}"),
+    group: Lexer.SKIPPED
+})
 const ListItemId = createToken({
     name: "ListItemId",
     pattern: /(\(?\d+((.\))|[.):]))|[*•-]/,
     longer_alt: Decimal,
+})
+const SectionHeader = createToken({
+    name: "SectionHeader",
+    pattern: regexParts.regex("{{SectionHeader}}"),
+    longer_alt: Word,
+    line_breaks: true
 })
 
 /**
  * Holds the tokens used to parse the recipe. **Note** that the *order* in which these appear *matters*.
  */
 export const recipeTokens = [
-    WhiteSpace,
+    // WhiteSpace,
     ListItemId,
     UnicodeFraction, Fraction, Decimal, Integer,
     Unit,
+    SectionHeader,
     Word
 ]
 
@@ -140,6 +89,10 @@ export const recipeTokenVocabulary = recipeTokens.reduce((vocab, token) => {
     vocab[token.name] = token
     return vocab
 }, {} as { [key: string]: TokenType })
+
+
+// todo see multi-mode lexing https://github.com/Chevrotain/chevrotain/blob/master/examples/lexer/multi_mode_lexer/multi_mode_lexer.js
+//      so that each section have a mode
 
 const RecipeLexer = new Lexer(recipeTokens)
 
@@ -158,6 +111,10 @@ export function lex(input: string): ILexingResult {
 
     return result
 }
+
+/*
+ | MATCHING FUNCTIONS
+ */
 
 /**
  * Attempts to match [unicode fractions](https://www.compart.com/en/unicode/decomposition/%3Cfraction%3E).

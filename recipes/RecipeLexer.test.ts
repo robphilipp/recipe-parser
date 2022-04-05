@@ -1,15 +1,15 @@
 import {lex} from "./RecipeLexer";
 
-describe("when using the recipe lexer", () => {
+describe("when using the recipe lexer for ingredients", () => {
     it("should be able to tokenize a list of valid numbers", () => {
         const result = lex("0.333 314 3/2")
         expect(result.tokens.map(token => token.image)).toEqual(["0.333", "314", "3/2"])
     })
     it("should be able to tokenize a list of valid numbers with one invalid number", () => {
         const result = lex("0.333 314 3/2 3.2/4")
-        expect(result.tokens.map(token => token.image).slice(0,3)).toEqual(["0.333", "314", "3/2"])
-        expect(result.errors.length).toBe(1)
-        expect(result.errors[0].message).toBe("unexpected character: ->/<- at offset: 17, skipped 1 characters.")
+        expect(result.tokens.map(token => token.image)).toEqual(["0.333", "314", "3/2", "3.2", "/4"])
+        expect(result.tokens[3].tokenType.name).toBe("Decimal")
+        expect(result.tokens[4].tokenType.name).toBe("Word")
     })
     it("should be able to tokenize a list of number and units", () => {
         const result = lex("1/2 cup 4 gal fl oz")
@@ -105,5 +105,12 @@ describe("when using the recipe lexer", () => {
         const result = lex("- 1/2 cup all purpose flour")
         expect(result.tokens.map(token => token.image))
             .toEqual(["-", "1/2", "cup", "all", "purpose", "flour"])
+    })
+})
+
+describe("when using the recipe lexer for section headers", () => {
+    it("should be able to lex a section header", () => {
+        const result = lex(`\nSection Header\n`)
+        expect(result.tokens.map(token => token.image)).toEqual(["\nSection Header\n"])
     })
 })
