@@ -77,11 +77,11 @@ const SectionHeader = createToken({
  * Holds the tokens used to parse the recipe. **Note** that the *order* in which these appear *matters*.
  */
 export const recipeTokens = [
-    // WhiteSpace,
+    SectionHeader,
+    WhiteSpace,
     ListItemId,
     UnicodeFraction, Fraction, Decimal, Integer,
     Unit,
-    SectionHeader,
     Word
 ]
 
@@ -132,12 +132,17 @@ function matchUnicodeFraction(text: string, startOffset: number): CustomPatternM
     const integerMatch = text.match(/0|[1-9]\d*\s*/)
     if (integerMatch !== null) {
         const integer = integerMatch[0]
-        // plus 1 for the space
-        const nextChar = text.charAt(startOffset + integer.length)
+        // deal with possible spaces between the integer and unicode fraction
+        let i = 0
+        let nextChar: string
+        do {
+            nextChar = text.charAt(startOffset + integer.length + i)
+            i++
+        } while (nextChar === ' ')
 
         const [numerator, denominator] = fractionFromUnicode(nextChar)
         if (isValidFraction([numerator, denominator])) {
-            const result: CustomPatternMatcherReturn = [text.slice(startOffset, startOffset + integer.length + 1)]
+            const result: CustomPatternMatcherReturn = [text.slice(startOffset, startOffset + integer.length + i)]
             result.payload = [parseInt(currentChar.trim()) * denominator + numerator, denominator]
             return result
         }

@@ -113,4 +113,9 @@ describe("when using the recipe lexer for section headers", () => {
         const result = lex(`\nSection Header\n`)
         expect(result.tokens.map(token => token.image)).toEqual(["\nSection Header\n"])
     })
+    it("should be able to lex a section header and several ingredients", () => {
+        const result = lex(`\nSection Header\n- 1/2 cup all purpose flour\n1 ¼ cup whole milk`)
+        expect(result.tokens.map(token => token.image))
+            .toEqual(['\nSection Header\n', "-", "1/2", "cup", "all", "purpose", "flour", "1 ¼", "cup", "whole", "milk"])
+    })
 })
