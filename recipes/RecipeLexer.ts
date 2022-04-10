@@ -9,15 +9,19 @@ import {regexParts} from "./RegExpParts";
 
 in ABNF (https://matt.might.net/articles/grammars-bnf-ebnf/)
 
-<ingredient> ::= [<item_id> <whitespace>] <amount>
+ingredient_item = [ingredient_item_id 1*whitespace] amount ingredient
 
 white_space = *( " " / "\t" )
-list_item_id = ( [ "(" ] number [ "." / ")" / ":" ] ) / ( [ "-" / "*" / "•" ])
+ingredient_item_id = ( [ "(" ] number [ "." / ")" / ":" ] ) / ( [ "-" / "*" / "•" ])
 
 amount = [modifier] [white_space] quantity [white_space] [unit] [ "." ]
 modifier :== approx / approximately / about / "~" / around
 quantity = number / fraction
 unit = (cup / tsp / tbsp (.... see units in recipes ui))["."]
+
+ingredient = *word newline
+word = 1*("w" / "." / "'" / "(" / ")" / "[" / "]" / "{" / "}" / "-")
+newline = "\n" / | "\r\n"
 
 number = integer / decimal / (integer unicode_fraction)
 integer :: = 0 / (natural_digit *digit)
@@ -61,6 +65,11 @@ const WhiteSpace = createToken({
     pattern: regexParts.regex("{{WhiteSpace}}"),
     group: Lexer.SKIPPED
 })
+const NewLine = createToken({
+    name: "NewLine",
+    pattern: regexParts.regex("{{NewLine}}"),
+    group: Lexer.SKIPPED
+})
 const ListItemId = createToken({
     name: "ListItemId",
     pattern: /(\(?\d+((.\))|[.):]))|[*•-]/,
@@ -77,6 +86,7 @@ const SectionHeader = createToken({
  * Holds the tokens used to parse the recipe. **Note** that the *order* in which these appear *matters*.
  */
 export const recipeTokens = [
+    // NewLine,
     SectionHeader,
     WhiteSpace,
     ListItemId,
