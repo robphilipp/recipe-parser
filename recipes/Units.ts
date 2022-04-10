@@ -105,8 +105,8 @@ export const baseUnits: Units = {
         target: UnitType.PIECE
     },
     pinch: {
-        abbreviations: ['pnch'],
-        synonyms: ['pinch'],
+        abbreviations: ['pnch', 'tch'],
+        synonyms: ['pinch', 'touch'],
         target: UnitType.PINCH
     }
 }

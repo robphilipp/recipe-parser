@@ -31,6 +31,10 @@ natural_digit = 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9
 digit = 0 / natural_digit
 unicode_fraction = \u00BC | \u00BD | \u00BE | ...
  */
+
+/*
+ | NUMBERS
+ */
 const Integer = createToken({
     name: "Integer",
     pattern: regexParts.regex("{{IntegerPart}}")
@@ -57,22 +61,29 @@ const WholeFraction = createToken({
     longer_alt: Fraction,
     line_breaks: false
 })
+const Quantity = createToken({
+    name: "Quantity",
+    pattern: matchQuantity,
+    line_breaks: false,
+    longer_alt: WholeFraction
+})
 
-// const Quantity = createToken({
-//     name: "Quantity",
-//     pattern: matchQuantity,
-//     line_breaks: false,
-//     longer_alt:
-// })
+const Unit = createToken({
+    name: "Unit",
+    pattern: unitMatcher,
+    line_breaks: false
+})
+
+const Amount = createToken({
+    name: "Amount",
+    pattern: amountMatcher,
+    line_breaks: false,
+    longer_alt: Quantity
+})
 
 const Word = createToken({
     name: "Word",
     pattern: regexParts.regex("{{WordPart}}")
-})
-const Unit = createToken({
-    name: "Unit",
-    pattern: unitMatcher,
-    line_breaks: true
 })
 const WhiteSpace = createToken({
     name: "WhiteSpace",
@@ -105,7 +116,7 @@ export const recipeTokens = [
     SectionHeader,
     WhiteSpace,
     ListItemId,
-    WholeFraction, UnicodeFraction, Fraction, Decimal, Integer,
+    Amount, Quantity, WholeFraction, UnicodeFraction, Fraction, Decimal, Integer,
     Unit,
     Word
 ]
@@ -141,15 +152,28 @@ export function lex(input: string): ILexingResult {
  | MATCHING FUNCTIONS
  */
 
+/**
+ * Matches a quantity, which could be a whole number and a fraction, a whole number and a unicode
+ * fraction, a fraction, a unicode fraction, an integer, or a decimal.
+ * @param text The text to search
+ * @param startOffset The current offset into the text
+ * @return A quantity, if found, or null if not found
+ */
 function matchQuantity(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+    const fraction = matchFraction(text, startOffset)
+    if (fraction !== null) {
+        return fraction
+    }
     const unicode = matchUnicodeFraction(text, startOffset)
     if (unicode !== null) {
         return unicode
     }
 
-    // is it a fraction
-    // const integerMatch = text.match(/0|[1-9]\d*\s*/)
-    // if (integerMatch !== null)
+    const number = text.slice(startOffset)
+        .match(regexParts.regex("^({{IntegerPart}}{{FractionalPart}}|{{IntegerPart}})"))
+    if (number !== null) {
+        return [number[0]]
+    }
 
     return null
 }
@@ -182,11 +206,11 @@ function matchFraction(text: string, startOffset: number): CustomPatternMatcherR
     // no leading whole number, so attempt to parse the fraction
     const fraction = currentText.match(regexParts.regex("{{IntegerPart}}/{{NaturalNumberPart}}"))
     if (fraction !== null) {
-        const [numerator, denominator] = fraction[0].split('/').map(parseInt)
+        const [numerator, denominator] = fraction[0].split('/').map(str => parseInt(str))
 
         if (isValidFraction([numerator, denominator])) {
             const result: CustomPatternMatcherReturn = [fraction[0]]
-            result.payload = [denominator + numerator, denominator]
+            result.payload = [numerator, denominator]
             return result
         }
 
@@ -223,7 +247,8 @@ function matchUnicodeFraction(text: string, startOffset: number): CustomPatternM
         const [numerator, denominator] = fractionFromUnicode(nextChar)
         if (isValidFraction([numerator, denominator])) {
             const result: CustomPatternMatcherReturn = [text.slice(startOffset, startOffset + integer.length + i)]
-            result.payload = [parseInt(currentChar.trim()) * denominator + numerator, denominator]
+            result.payload = [parseInt(integer) * denominator + numerator, denominator]
+            // result.payload = [parseInt(currentChar.trim()) * denominator + numerator, denominator]
             return result
         }
     }
@@ -244,7 +269,7 @@ function matchUnicodeFraction(text: string, startOffset: number): CustomPatternM
  * Attempts to match the units to the current location in the text
  * @param text The text to search
  * @param startOffset The current location in the text
- * @return A pattern matching result if the text matches the unit or null if there is not match
+ * @return A pattern matching result if the text matches the unit or null if there is no match
  */
 function unitMatcher(text: string, startOffset: number): CustomPatternMatcherReturn | null {
     // try (in order) plural synonyms, singular synonyms, phonetic names
@@ -340,4 +365,27 @@ function matchingUnit(
         }
     }
     return undefined
+}
+
+/**
+ * Matcher for the amount of an ingredient (quantity, unit)
+ * @param text The text to search
+ * @param startOffset The current location in the text
+ * @return The matcher return with a payload if found; otherwise null
+ */
+function amountMatcher(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+    const quantity = matchQuantity(text, startOffset)
+    if (quantity !== null) {
+        const unit = unitMatcher(text, startOffset + quantity[0].length + 1)
+        if (unit !== null) {
+            const result: CustomPatternMatcherReturn = [text.slice(startOffset, startOffset + quantity[0].length + unit[0].length + 1)]
+            result.payload = {
+                quantity: quantity.payload,
+                unit: unit.payload
+            }
+            return result
+        }
+    }
+
+    return null
 }
