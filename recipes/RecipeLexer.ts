@@ -50,6 +50,21 @@ const UnicodeFraction = createToken({
     pattern: matchUnicodeFraction,
     line_breaks: false
 })
+
+const WholeFraction = createToken({
+    name: "WholeFraction",
+    pattern: matchFraction,
+    longer_alt: Fraction,
+    line_breaks: false
+})
+
+// const Quantity = createToken({
+//     name: "Quantity",
+//     pattern: matchQuantity,
+//     line_breaks: false,
+//     longer_alt:
+// })
+
 const Word = createToken({
     name: "Word",
     pattern: regexParts.regex("{{WordPart}}")
@@ -90,7 +105,7 @@ export const recipeTokens = [
     SectionHeader,
     WhiteSpace,
     ListItemId,
-    UnicodeFraction, Fraction, Decimal, Integer,
+    WholeFraction, UnicodeFraction, Fraction, Decimal, Integer,
     Unit,
     Word
 ]
@@ -126,6 +141,60 @@ export function lex(input: string): ILexingResult {
  | MATCHING FUNCTIONS
  */
 
+function matchQuantity(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+    const unicode = matchUnicodeFraction(text, startOffset)
+    if (unicode !== null) {
+        return unicode
+    }
+
+    // is it a fraction
+    // const integerMatch = text.match(/0|[1-9]\d*\s*/)
+    // if (integerMatch !== null)
+
+    return null
+}
+
+/**
+ * Attempts to match fractions. The fractions can be expressed whole integers plus a fractional part,
+ * or an integer divided by a natural number.
+ * @param text The text to parse
+ * @param startOffset The current offset in the text
+ * @return The result if found or null if not found. Adds a tuple to the payload that holds the overall
+ * numerator and denominator. For example, if the text is "2 3/5" then the payload would be "[13, 5]"
+ * which represents "13/5"
+ */
+function matchFraction(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+    const currentText = text.slice(startOffset)
+    // when the number has an integer and a fraction (e.g. 1 1/4), then parse them into
+    // that same token. we attempt to match an integer part (plus trailing whitespace)
+    const wholeAndFraction = currentText.match(regexParts.regex("{{IntegerPart}} {{IntegerPart}}/{{NaturalNumberPart}}"))
+    if (wholeAndFraction !== null) {
+        const [whole, fraction] = wholeAndFraction[0].split(' ')
+        const [numerator, denominator] = fraction.split('/').map(str => parseInt(str))
+
+        if (isValidFraction([numerator, denominator])) {
+            const result: CustomPatternMatcherReturn = [wholeAndFraction[0]]
+            result.payload = [parseInt(whole) * denominator + numerator, denominator]
+            return result
+        }
+    }
+
+    // no leading whole number, so attempt to parse the fraction
+    const fraction = currentText.match(regexParts.regex("{{IntegerPart}}/{{NaturalNumberPart}}"))
+    if (fraction !== null) {
+        const [numerator, denominator] = fraction[0].split('/').map(parseInt)
+
+        if (isValidFraction([numerator, denominator])) {
+            const result: CustomPatternMatcherReturn = [fraction[0]]
+            result.payload = [denominator + numerator, denominator]
+            return result
+        }
+
+    }
+
+    return null
+}
+
 /**
  * Attempts to match [unicode fractions](https://www.compart.com/en/unicode/decomposition/%3Cfraction%3E).
  * @param text The total text to parse
@@ -136,10 +205,11 @@ export function lex(input: string): ILexingResult {
 function matchUnicodeFraction(text: string, startOffset: number): CustomPatternMatcherReturn | null {
     // the character at the current lexer position
     const currentChar = text.charAt(startOffset)
+    const currentText = text.slice(startOffset)
 
     // when the number has an integer and a unicode fraction (e.g. 1¼ or 1 ¼), then parse them into
     // that same token. we attempt to match an integer part (plus trailing whitespace)
-    const integerMatch = text.match(/0|[1-9]\d*\s*/)
+    const integerMatch = currentText.match(/0|[1-9]\d*\s*/)
     if (integerMatch !== null) {
         const integer = integerMatch[0]
         // deal with possible spaces between the integer and unicode fraction

@@ -3,13 +3,13 @@ import {lex} from "./RecipeLexer";
 describe("when using the recipe lexer for ingredients", () => {
     it("should be able to tokenize a list of valid numbers", () => {
         const result = lex("0.333 314 3/2")
-        expect(result.tokens.map(token => token.image)).toEqual(["0.333", "314", "3/2"])
+        expect(result.tokens.map(token => token.image)).toEqual(["0.333", "314 3/2"])
     })
     it("should be able to tokenize a list of valid numbers with one invalid number", () => {
         const result = lex("0.333 314 3/2 3.2/4")
-        expect(result.tokens.map(token => token.image)).toEqual(["0.333", "314", "3/2", "3.2", "/4"])
-        expect(result.tokens[3].tokenType.name).toBe("Decimal")
-        expect(result.tokens[4].tokenType.name).toBe("Word")
+        expect(result.tokens.map(token => token.image)).toEqual(["0.333", "314 3/2", "3.2", "/4"])
+        expect(result.tokens[2].tokenType.name).toBe("Decimal")
+        expect(result.tokens[3].tokenType.name).toBe("Word")
     })
     it("should be able to tokenize a list of number and units", () => {
         const result = lex("1/2 cup 4 gal fl oz")
@@ -29,9 +29,9 @@ describe("when using the recipe lexer for ingredients", () => {
     })
     it("should be able to tokenize an ingredient with phonetics for cup", () => {
         const result = lex("1 1/2 cp all purpose flour")
-        expect(result.tokens.map(token => token.image)).toEqual(["1", "1/2", "cp", "all", "purpose", "flour"])
+        expect(result.tokens.map(token => token.image)).toEqual(["1 1/2", "cp", "all", "purpose", "flour"])
         // the payload holds the actual unit calculated from the text
-        expect(result.tokens[2].payload).toBe('cup')
+        expect(result.tokens[1].payload).toBe('cup')
     })
     it("should be able to tokenize an ingredient with for ¼ cup", () => {
         const result = lex("¼ cup all purpose flour")
@@ -41,8 +41,8 @@ describe("when using the recipe lexer for ingredients", () => {
         expect(result.tokens[0].payload).toEqual([1, 4])
     })
     it("should be able to tokenize an ingredient with for 1 ¼ cup", () => {
-        const result = lex("1 ¼ cup all purpose flour")
-        expect(result.tokens.map(token => token.image)).toEqual(["1 ¼", "cup", "all", "purpose", "flour"])
+        const result = lex("11 ¼ cup all purpose flour")
+        expect(result.tokens.map(token => token.image)).toEqual(["11 ¼", "cup", "all", "purpose", "flour"])
         // the payload holds the actual unit calculated from the text
         expect(result.tokens[1].payload).toBe('cup')
         expect(result.tokens[0].payload).toEqual([5, 4])
@@ -72,9 +72,9 @@ describe("when using the recipe lexer for ingredients", () => {
             .toEqual(["1.", "1/2", "cup", "all", "purpose", "flour"])
     })
     it("should be able to tokenize an ingredient with 10:", () => {
-        const result = lex("10: 1/2 cup all purpose flour")
+        const result = lex("10: 1 1/2 cup all purpose flour")
         expect(result.tokens.map(token => token.image))
-            .toEqual(["10:", "1/2", "cup", "all", "purpose", "flour"])
+            .toEqual(["10:", "1 1/2", "cup", "all", "purpose", "flour"])
     })
     it("should be able to tokenize an ingredient with (1.)", () => {
         const result = lex("(1.) 1/2 cup all purpose flour")
