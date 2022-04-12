@@ -96,8 +96,8 @@ const NewLine = createToken({
     pattern: regexParts.regex("{{NewLine}}"),
     group: Lexer.SKIPPED
 })
-const ListItemId = createToken({
-    name: "ListItemId",
+const IngredientItemId = createToken({
+    name: "IngredientItemId",
     pattern: /(\(?\d+((.\))|[.):]))|[*•-]/,
     longer_alt: Decimal,
 })
@@ -115,7 +115,7 @@ export const recipeTokens = [
     // NewLine,
     SectionHeader,
     WhiteSpace,
-    ListItemId,
+    IngredientItemId,
     Amount, Quantity, WholeFraction, UnicodeFraction, Fraction, Decimal, Integer,
     Unit,
     Word

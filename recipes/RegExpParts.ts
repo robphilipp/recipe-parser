@@ -95,9 +95,4 @@ export const regexParts = newRegexParts()
     .add("WordPart", /[\w.'/()\[\]{}-]+/.source)
     // a section header should be on its own line
     .add("NewLine", /(\n|\r\n)/.source)
-    // .add("SectionHeader", /^\w+[\w ]*$/.source)
     .add("SectionHeader", /(\n|\r\n)\w+[\w ]*(\n|\r\n)/.source)
-    // .add("SectionHeader", "{{NewLine}} \w+[\w ]* {{NewLine}}")
-
-// regexParts.add("SectionHeader", regexParts.regex("{{NewLine}}"))
-
