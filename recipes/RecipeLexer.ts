@@ -1,7 +1,7 @@
 import {createToken, ILexingResult, Lexer, TokenType} from 'chevrotain'
 import {baseUnits, phoneticUnits, pluralUnits, UnitInfo} from "./Units";
 import {CustomPatternMatcherReturn} from "@chevrotain/types";
-import {fractionFromUnicode, isValidFraction} from "./Numbers";
+import {fractionFromUnicode, isValidFraction, Fraction} from "./Numbers";
 import {regexParts} from "./RegExpParts";
 
 
@@ -160,6 +160,10 @@ export function lex(input: string): ILexingResult {
  * @return A quantity, if found, or null if not found
  */
 function matchQuantity(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+    const slang = matchSlang(text, startOffset)
+    if (slang !== null) {
+        return slang
+    }
     const fraction = matchFraction(text, startOffset)
     if (fraction !== null) {
         return fraction
@@ -175,6 +179,34 @@ function matchQuantity(text: string, startOffset: number): CustomPatternMatcherR
         return [number[0]]
     }
 
+    return null
+}
+
+const slangQuantities = new Array<[string, Fraction]>(
+    ['a couple', [2, 1]],
+    ['a few', [3, 1]],
+    ['several', [3, 1]],
+    ['an', [1, 1]],
+    ['a', [1, 1]],
+)
+
+/**
+ * Matcher for slang quantities. For example, "a pinch" is 1 pinch, "a couple" is 2, "a few" is 3,
+ * and "several" is also 3.
+ * @param text The text to parse
+ * @param startOffset The current offset in the text
+ * @return The result if found or null if not found. Adds a tuple to the payload that holds the overall
+ * numerator and denominator. For example, if the text is "a couple" then the payload would be `[2, 1]`
+ * which represents `2`
+ */
+function matchSlang(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+    for (let [slang, fraction] of slangQuantities) {
+        if (text.startsWith(slang, startOffset)) {
+            const result: CustomPatternMatcherReturn = [slang]
+            result.payload = fraction
+            return result
+        }
+    }
     return null
 }
 

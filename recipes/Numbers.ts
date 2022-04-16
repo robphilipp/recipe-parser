@@ -1,3 +1,5 @@
+import {CustomPatternMatcherReturn} from "@chevrotain/types";
+
 export type Fraction = [numerator: number, denominator: number]
 
 /**
@@ -102,3 +104,30 @@ export function asDecimal(tuple: Fraction): number {
     return NaN
 }
 
+// export function fractionFromSlang(slang: string): {fraction: Fraction, matchedText: string} {
+//     if (slang.startsWith('a couple')) {
+//         const result: CustomPatternMatcherReturn = ['a couple']
+//         result.payload = [2, 1]
+//         return result
+//     }
+//     if (slang.startsWith('a few', startOffset)) {
+//         const result: CustomPatternMatcherReturn = ['a few']
+//         result.payload = [3, 1]
+//         return result
+//     }
+//     if (slang.startsWith('several', startOffset)) {
+//         const result: CustomPatternMatcherReturn = ['several']
+//         result.payload = [3, 1]
+//         return result
+//     }
+//     if (slang.startsWith('an', startOffset)) {
+//         const result: CustomPatternMatcherReturn = ['an']
+//         result.payload = [1, 1]
+//         return result
+//     }
+//     if (slang.startsWith('a', startOffset)) {
+//         const result: CustomPatternMatcherReturn = ['a']
+//         result.payload = [1, 1]
+//         return result
+//     }
+// }

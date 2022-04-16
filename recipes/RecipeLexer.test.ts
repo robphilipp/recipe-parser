@@ -103,6 +103,36 @@ describe("when using the recipe lexer for ingredients", () => {
         expect(result.tokens.map(token => token.image))
             .toEqual(["-", "1/2 cup", "all", "purpose", "flour"])
     })
+    it("should be able to tokenize an ingredient with slang and list", () => {
+        const result = lex("- a couple pinches all purpose flour")
+        expect(result.tokens.map(token => token.image))
+            .toEqual(["-", "a couple pinches", "all", "purpose", "flour"])
+        expect(result.tokens[1].payload).toEqual({quantity: [2, 1], unit: 'pinch'})
+    })
+    it("should be able to tokenize an ingredient with slang no list", () => {
+        const result = lex("a couple pinches all purpose flour")
+        expect(result.tokens.map(token => token.image))
+            .toEqual(["a couple pinches", "all", "purpose", "flour"])
+        expect(result.tokens[0].payload).toEqual({quantity: [2, 1], unit: 'pinch'})
+    })
+    it("should be able to tokenize an ingredient with slang several", () => {
+        const result = lex("several pinches all purpose flour")
+        expect(result.tokens.map(token => token.image))
+            .toEqual(["several pinches", "all", "purpose", "flour"])
+        expect(result.tokens[0].payload).toEqual({quantity: [3, 1], unit: 'pinch'})
+    })
+    it("should be able to tokenize an ingredient with slang a few", () => {
+        const result = lex("a few pinches all purpose flour")
+        expect(result.tokens.map(token => token.image))
+            .toEqual(["a few pinches", "all", "purpose", "flour"])
+        expect(result.tokens[0].payload).toEqual({quantity: [3, 1], unit: 'pinch'})
+    })
+    it("should be able to tokenize an ingredient with slang a few", () => {
+        const result = lex("a pinch all purpose flour")
+        expect(result.tokens.map(token => token.image))
+            .toEqual(["a pinch", "all", "purpose", "flour"])
+        expect(result.tokens[0].payload).toEqual({quantity: [1, 1], unit: 'pinch'})
+    })
 })
 
 describe("when using the recipe lexer for section headers", () => {
