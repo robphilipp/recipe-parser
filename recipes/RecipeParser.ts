@@ -1,4 +1,4 @@
-import {CstNode, CstParser} from "chevrotain";
+import {CstNode, CstParser, ILexingResult} from "chevrotain";
 import {lex, recipeTokenVocabulary} from "./RecipeLexer";
 
 /* -- ingredients
@@ -62,7 +62,6 @@ export class RecipeParser extends CstParser {
     })
     // the ingredient (e.g. all-purpose flour)
     ingredient = this.RULE("ingredient", () => {
-        // this.CONSUME(Ingredient)
         this.AT_LEAST_ONE({
             DEF: () => {
                 this.CONSUME(Word)
@@ -73,12 +72,18 @@ export class RecipeParser extends CstParser {
 
 const parserInstance = new RecipeParser()
 
-export function parse(input: string): {parserInstance: RecipeParser, cst: CstNode} {
-    const lexResult = lex(input)
+export type RecipeParseResult = {
+    parserInstance: RecipeParser,
+    cst: CstNode,
+    lexingResult: ILexingResult
+}
 
-    parserInstance.input = lexResult.tokens
+export function parse(input: string): RecipeParseResult {
+    const lexingResult = lex(input)
+
+    parserInstance.input = lexingResult.tokens
 
     const cst = parserInstance.ingredients()
 
-    return {parserInstance, cst}
+    return {parserInstance, cst, lexingResult}
 }

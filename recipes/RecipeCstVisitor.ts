@@ -1,6 +1,6 @@
 import {parse, RecipeParser} from "./RecipeParser";
 import {UnitType} from "./Units";
-import {CstChildrenDictionary, CstElement, CstNode, IToken} from "chevrotain";
+import {CstChildrenDictionary, CstElement, CstNode, ILexingError, IToken} from "chevrotain";
 import {Fraction} from "./Numbers";
 
 // a new parser instance with the concrete syntax tree (CST) output (enabled by default)
@@ -29,9 +29,8 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
     }
 
     ingredients(ctx: IngredientsContext): Partial<RecipeAst> {
+        // there are one or more ingredients, so we need to run through the list
         const ingredients = ctx.ingredientItem.map(cstNode => this.visit(cstNode))
-        // const ingredients = this.visit(ctx.ingredientItem)
-
         return {
             type: 'ingredients',
             ingredients
@@ -67,9 +66,17 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
 
 const toAstVisitorInstance = new RecipeCstVisitor()
 
-export function toAst(text: string): RecipeAst {
-    const {cst} = parse(text)
-    return toAstVisitorInstance.visit(cst)
+export type RecipeResult = {
+    recipe: RecipeAst,
+    errors: Array<ILexingError>
+}
+
+export function toRecipe(text: string): RecipeResult {
+    const {cst, lexingResult} = parse(text)
+    return {
+        recipe: toAstVisitorInstance.visit(cst),
+        errors: lexingResult.errors
+    }
 }
 
 /*
