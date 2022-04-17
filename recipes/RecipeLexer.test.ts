@@ -127,10 +127,10 @@ describe("when using the recipe lexer for ingredients", () => {
             .toEqual(["a few pinches", "all", "purpose", "flour"])
         expect(result.tokens[0].payload).toEqual({quantity: [3, 1], unit: 'pinch'})
     })
-    it("should be able to tokenize an ingredient with slang a few", () => {
+    it("should be able to tokenize an ingredient with slang a pinch", () => {
         const result = lex("a pinch all purpose flour")
-        expect(result.tokens.map(token => token.image))
-            .toEqual(["a pinch", "all", "purpose", "flour"])
+        expect(result.tokens.map(token => token.image)).toEqual(["a pinch", "all", "purpose", "flour"])
+        expect(true).toBeTruthy()
         expect(result.tokens[0].payload).toEqual({quantity: [1, 1], unit: 'pinch'})
     })
 })

@@ -1,7 +1,7 @@
 import {createToken, ILexingResult, Lexer, TokenType} from 'chevrotain'
-import {baseUnits, phoneticUnits, pluralUnits, UnitInfo} from "./Units";
+import {baseUnits, phoneticUnits, pluralUnits, UnitInfo, UnitType} from "./Units";
 import {CustomPatternMatcherReturn} from "@chevrotain/types";
-import {fractionFromUnicode, isValidFraction, Fraction} from "./Numbers";
+import {Fraction, fractionFromUnicode, isValidFraction} from "./Numbers";
 import {regexParts} from "./RegExpParts";
 
 
@@ -160,7 +160,7 @@ export function lex(input: string): ILexingResult {
  * @return A quantity, if found, or null if not found
  */
 function matchQuantity(text: string, startOffset: number): CustomPatternMatcherReturn | null {
-    const slang = matchSlang(text, startOffset)
+    const slang = matchSlangQuantities(text, startOffset)
     if (slang !== null) {
         return slang
     }
@@ -182,13 +182,10 @@ function matchQuantity(text: string, startOffset: number): CustomPatternMatcherR
     return null
 }
 
-const slangQuantities = new Array<[string, Fraction]>(
-    ['a couple', [2, 1]],
-    ['a few', [3, 1]],
-    ['several', [3, 1]],
-    ['an', [1, 1]],
-    ['a', [1, 1]],
-)
+// the supported slang quantities
+const slangQuantities: Array<[string, Fraction]> = [
+    ['a couple', [2, 1]], ['a few', [3, 1]], ['several', [3, 1]]//, ['an', [1, 1]], ['a', [1, 1]],
+]
 
 /**
  * Matcher for slang quantities. For example, "a pinch" is 1 pinch, "a couple" is 2, "a few" is 3,
@@ -199,7 +196,7 @@ const slangQuantities = new Array<[string, Fraction]>(
  * numerator and denominator. For example, if the text is "a couple" then the payload would be `[2, 1]`
  * which represents `2`
  */
-function matchSlang(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+function matchSlangQuantities(text: string, startOffset: number): CustomPatternMatcherReturn | null {
     for (let [slang, fraction] of slangQuantities) {
         if (text.startsWith(slang, startOffset)) {
             const result: CustomPatternMatcherReturn = [slang]
@@ -406,6 +403,12 @@ function matchingUnit(
  * @return The matcher return with a payload if found; otherwise null
  */
 function amountMatcher(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+    // in case there are slang expressions such as "a pinch", "a touch", "to taste"
+    const slang = matchSlangAmounts(text, startOffset)
+    if (slang !== null) {
+        return slang
+    }
+
     const quantity = matchQuantity(text, startOffset)
     if (quantity !== null) {
         const unit = unitMatcher(text, startOffset + quantity[0].length + 1)
@@ -419,5 +422,36 @@ function amountMatcher(text: string, startOffset: number): CustomPatternMatcherR
         }
     }
 
+    return null
+}
+
+/**
+ * Slang amounts
+ */
+type SlangAmount = {
+    slang: string
+    quantity: Fraction
+    unit: UnitType
+}
+const slangAmounts: Array<SlangAmount> = [
+    {slang: 'a pinch', quantity: [1, 1], unit: UnitType.PINCH},
+    {slang: 'a touch', quantity: [1, 1], unit: UnitType.PINCH},
+    {slang: 'to taste', quantity: [1, 1], unit: UnitType.PINCH},
+]
+
+/**
+ * Matcher for slang amounts (e.g. a pinch, a touch, etc)
+ * @param text The text to search
+ * @param startOffset The current location in the text
+ * @return The matcher return with a payload if found; otherwise null
+ */
+function matchSlangAmounts(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+    for (let {slang, quantity, unit} of slangAmounts) {
+        if (text.startsWith(slang, startOffset)) {
+            const result: CustomPatternMatcherReturn = [slang]
+            result.payload = {quantity, unit}
+            return result
+        }
+    }
     return null
 }
