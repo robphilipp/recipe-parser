@@ -130,8 +130,12 @@ describe("when using the recipe lexer for ingredients", () => {
     it("should be able to tokenize an ingredient with slang a pinch", () => {
         const result = lex("a pinch all purpose flour")
         expect(result.tokens.map(token => token.image)).toEqual(["a pinch", "all", "purpose", "flour"])
-        expect(true).toBeTruthy()
         expect(result.tokens[0].payload).toEqual({quantity: [1, 1], unit: 'pinch'})
+    })
+    it("should be able to tokenize pieces", () => {
+        const result = lex("1 egg")
+        expect(result.tokens.map(token => token.image)).toEqual(["1", "egg"])
+        expect(result.tokens[0].payload).toEqual({quantity: [1, 1], unit: 'piece'})
     })
 })
 
@@ -146,5 +150,12 @@ describe("when using the recipe lexer for section headers", () => {
             .toEqual(['\nSection Header\n', "-", "1/2 cup", "all", "purpose", "flour", "1 ¼ cup", "whole", "milk"])
         expect(result.tokens[2].payload).toEqual({quantity: [1, 2], unit: 'cup'})
         expect(result.tokens[6].payload).toEqual({quantity: [5, 4], unit: 'cup'})
+    })
+    it("should be able to lex a several ingredients", () => {
+        const result = lex(`1 1/2 cup all purpose flour\n1 tsp vanilla`)
+        expect(result.tokens.map(token => token.image))
+            .toEqual(["1 1/2 cup", "all", "purpose", "flour", "1 tsp", "vanilla"])
+        expect(result.tokens[0].payload).toEqual({quantity: [3, 2], unit: 'cup'})
+        expect(result.tokens[4].payload).toEqual({quantity: [1, 1], unit: 'tsp'})
     })
 })

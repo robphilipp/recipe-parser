@@ -46,8 +46,7 @@ describe("when parsing a recipe", () => {
     })
 
     it("should work for multiple items", () => {
-        const {parserInstance, cst} = parse(`1 1/2 cp all-purpose flour
-        1 tsp vanilla extract`)
+        const {parserInstance, cst} = parse(`1 1/2 cp all-purpose flour\n1 tsp vanilla extract`)
 
         expect(true).toBeTruthy()
         expect(cst).toBeDefined()

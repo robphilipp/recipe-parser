@@ -173,10 +173,12 @@ function matchQuantity(text: string, startOffset: number): CustomPatternMatcherR
         return unicode
     }
 
-    const number = text.slice(startOffset)
+    const matched = text.slice(startOffset)
         .match(regexParts.regex("^({{IntegerPart}}{{FractionalPart}}|{{IntegerPart}})"))
-    if (number !== null) {
-        return [number[0]]
+    if (matched !== null) {
+        const result: CustomPatternMatcherReturn = [matched[0]]
+        result.payload = [parseFloat(matched[0]), 1]
+        return result
     }
 
     return null
@@ -417,6 +419,15 @@ function amountMatcher(text: string, startOffset: number): CustomPatternMatcherR
             result.payload = {
                 quantity: quantity.payload,
                 unit: unit.payload
+            }
+            return result
+        } else {
+            // units are empty, so we assume that this is a piece (e.g. 1 egg, 1 banana,
+            // 2 apples, etc)
+            const result: CustomPatternMatcherReturn = [quantity[0]]
+            result.payload = {
+                quantity: quantity.payload,
+                unit: UnitType.PIECE
             }
             return result
         }

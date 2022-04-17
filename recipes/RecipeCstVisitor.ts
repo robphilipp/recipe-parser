@@ -29,7 +29,8 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
     }
 
     ingredients(ctx: IngredientsContext): Partial<RecipeAst> {
-        const ingredients = this.visit(ctx.ingredientItem)
+        const ingredients = ctx.ingredientItem.map(cstNode => this.visit(cstNode))
+        // const ingredients = this.visit(ctx.ingredientItem)
 
         return {
             type: 'ingredients',
@@ -55,7 +56,8 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
 
     amount(ctx: AmountContext): AmountType {
         const {quantity, unit} = ctx.Amount[0].payload
-        return {quantity, unit}
+        const [numerator, denominator] = quantity
+        return {quantity: numerator / denominator, unit}
     }
 
     ingredient(ctx: IngredientContext): string {
@@ -124,7 +126,8 @@ type IngredientItemType = {
 }
 
 type AmountType = {
-    quantity: Fraction
+    // quantity: Fraction
+    quantity: number
     unit: UnitType
 }
 
