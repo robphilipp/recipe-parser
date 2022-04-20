@@ -55,4 +55,12 @@ describe("when parsing a recipe", () => {
         expect(cst.children.ingredientItem).toBeDefined()
         expect(cst.children.ingredientItem).toHaveLength(2)
     })
+    it("should work for multiple items and sections", () => {
+        const {parserInstance, cst} = parse(`#dough#1 1/2 cp all-purpose flour\n1 tsp vanilla extract#sauce#\n1 cup milk`)
+
+        expect(cst.name).toBe('ingredients')
+        expect(cst.children).toBeDefined()
+        expect(cst.children.ingredientItem).toBeDefined()
+        expect(cst.children.ingredientItem).toHaveLength(3)
+    })
 })

@@ -103,9 +103,10 @@ const IngredientItemId = createToken({
 })
 const SectionHeader = createToken({
     name: "SectionHeader",
-    pattern: regexParts.regex("{{SectionHeader}}"),
+    // pattern: regexParts.regex("{{SectionHeader}}"),
+    pattern: sectionMatcher,
     longer_alt: Word,
-    line_breaks: true
+    // line_breaks: true
 })
 
 /**
@@ -113,12 +114,14 @@ const SectionHeader = createToken({
  */
 export const recipeTokens = [
     // NewLine,
-    SectionHeader,
+    // SectionHeader,
     WhiteSpace,
     IngredientItemId,
     Amount, Quantity, WholeFraction, UnicodeFraction, Fraction, Decimal, Integer,
     Unit,
-    Word
+    SectionHeader,
+    Word,
+    // SectionHeader
 ]
 
 export const recipeTokenVocabulary = recipeTokens.reduce((vocab, token) => {
@@ -222,7 +225,7 @@ function matchFraction(text: string, startOffset: number): CustomPatternMatcherR
     const currentText = text.slice(startOffset)
     // when the number has an integer and a fraction (e.g. 1 1/4), then parse them into
     // that same token. we attempt to match an integer part (plus trailing whitespace)
-    const wholeAndFraction = currentText.match(regexParts.regex("{{IntegerPart}} {{IntegerPart}}/{{NaturalNumberPart}}"))
+    const wholeAndFraction = currentText.match(regexParts.regex("^{{IntegerPart}} {{IntegerPart}}/{{NaturalNumberPart}}"))
     if (wholeAndFraction !== null) {
         const [whole, fraction] = wholeAndFraction[0].split(' ')
         const [numerator, denominator] = fraction.split('/').map(str => parseInt(str))
@@ -235,7 +238,7 @@ function matchFraction(text: string, startOffset: number): CustomPatternMatcherR
     }
 
     // no leading whole number, so attempt to parse the fraction
-    const fraction = currentText.match(regexParts.regex("{{IntegerPart}}/{{NaturalNumberPart}}"))
+    const fraction = currentText.match(regexParts.regex("^{{IntegerPart}}/{{NaturalNumberPart}}"))
     if (fraction !== null) {
         const [numerator, denominator] = fraction[0].split('/').map(str => parseInt(str))
 
@@ -433,6 +436,15 @@ function amountMatcher(text: string, startOffset: number): CustomPatternMatcherR
         }
     }
 
+    return null
+}
+
+function sectionMatcher(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+    if (amountMatcher(text, startOffset) !== null) return null
+    const match = regexParts.regex("^{{SectionHeader}}").exec(text.slice(startOffset))
+    if (match !== null) {
+        return [match[0]]
+    }
     return null
 }
 

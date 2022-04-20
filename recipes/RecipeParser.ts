@@ -28,7 +28,7 @@ digit = 0 / natural_digit
 unicode_fraction = \u00BC | \u00BD | \u00BE | ...
  */
 
-const {IngredientItemId, Amount, Word} = recipeTokenVocabulary
+const {IngredientItemId, Amount, Word, SectionHeader} = recipeTokenVocabulary
 
 export class RecipeParser extends CstParser {
     constructor() {
@@ -36,13 +36,27 @@ export class RecipeParser extends CstParser {
 
         this.performSelfAnalysis()
     }
+
     // list of ingredients
     ingredients = this.RULE("ingredients", () => {
         this.AT_LEAST_ONE({
+            // GATE: () => {
+            //     this.LA(1).tokenType === SectionHeader
+            // },
             DEF: () => {
-                this.SUBRULE(this.ingredientItem)
+                this.OR([
+                    {GATE: () => this.LA(1).tokenType === SectionHeader, ALT: () => {this.SUBRULE(this.section)}},
+                    {ALT: () => this.SUBRULE(this.ingredientItem)}
+                ])
+                // this.SUBRULE(this.section)
+                // this.SUBRULE(this.ingredientItem)
             }
         })
+    })
+    section = this.RULE("section", () => {
+        // this.OPTION(() => {
+            this.CONSUME(SectionHeader)
+        // })
     })
     // an ingredient, possibly as a numbered or bulleted list
     ingredientItem = this.RULE("ingredientItem", () => {
