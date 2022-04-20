@@ -37,26 +37,30 @@ export class RecipeParser extends CstParser {
         this.performSelfAnalysis()
     }
 
-    // list of ingredients
+    // list of ingredients can either have a section header, or an ingredient. if it has
+    // a section header, then under that section header, there could be more ingredients
     ingredients = this.RULE("ingredients", () => {
         this.AT_LEAST_ONE({
-            // GATE: () => {
-            //     this.LA(1).tokenType === SectionHeader
-            // },
             DEF: () => {
                 this.OR([
-                    {GATE: () => this.LA(1).tokenType === SectionHeader, ALT: () => {this.SUBRULE(this.section)}},
+                    {
+                        GATE: () => this.LA(1).tokenType === SectionHeader, ALT: () => {
+                            this.SUBRULE(this.section)
+                        }
+                    },
                     {ALT: () => this.SUBRULE(this.ingredientItem)}
                 ])
-                // this.SUBRULE(this.section)
-                // this.SUBRULE(this.ingredientItem)
             }
         })
     })
+    // a section in the ingredient list. for example, the ingredients to make a dough, or a sauce
     section = this.RULE("section", () => {
-        // this.OPTION(() => {
-            this.CONSUME(SectionHeader)
-        // })
+        this.CONSUME(SectionHeader)
+        this.AT_LEAST_ONE({
+            DEF: () => {
+                this.SUBRULE(this.ingredientItem)
+            }
+        })
     })
     // an ingredient, possibly as a numbered or bulleted list
     ingredientItem = this.RULE("ingredientItem", () => {
