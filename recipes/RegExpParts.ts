@@ -87,7 +87,9 @@ export function newRegexParts(): RegExpParts {
 }
 
 export const regexParts = newRegexParts()
+    // todo make the # or #(\n|\r\n) or (\n|\r\n) for the end of a section...
     .add("SectionHeader", /#\w+[\w ]*#/.source)
+    // .add("SectionHeader", /#\w+[\w ]*(\n|\r\n)/.source)
     // .add("SectionHeader", /#\w+[\w ]*(\n|\r\n)/.source)
     // .add("SectionHeader", /(\n|\r\n)\w+[\w ]*(\n|\r\n)/.source)
     // .add("SectionHeader", /(\n|\r\n)\w+[\w ]*(\n|\r\n)/.source)
