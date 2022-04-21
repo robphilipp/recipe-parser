@@ -103,25 +103,20 @@ const IngredientItemId = createToken({
 })
 const SectionHeader = createToken({
     name: "SectionHeader",
-    // pattern: regexParts.regex("{{SectionHeader}}"),
     pattern: sectionMatcher,
     longer_alt: Word,
-    // line_breaks: true
 })
 
 /**
  * Holds the tokens used to parse the recipe. **Note** that the *order* in which these appear *matters*.
  */
 export const recipeTokens = [
-    // NewLine,
-    // SectionHeader,
     WhiteSpace,
     IngredientItemId,
     Amount, Quantity, WholeFraction, UnicodeFraction, Fraction, Decimal, Integer,
     Unit,
     SectionHeader,
     Word,
-    // SectionHeader
 ]
 
 export const recipeTokenVocabulary = recipeTokens.reduce((vocab, token) => {
@@ -439,11 +434,23 @@ function amountMatcher(text: string, startOffset: number): CustomPatternMatcherR
     return null
 }
 
+/**
+ * Attempts to match the section header.
+ * @param text The text to search
+ * @param startOffset The current location in the text
+ * @return The matcher return with a payload if found; otherwise null
+ */
 function sectionMatcher(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+    // if the text matches an amount, then we don't want the section to match
     if (amountMatcher(text, startOffset) !== null) return null
+
     const match = regexParts.regex("^{{SectionHeader}}").exec(text.slice(startOffset))
     if (match !== null) {
-        return [match[0]]
+        const result: CustomPatternMatcherReturn = [match[0]]
+        result.payload = {
+            header: match[0].replace(/^#/, '').replace(/#$/, '')
+        }
+        return result
     }
     return null
 }

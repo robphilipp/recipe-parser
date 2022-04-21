@@ -30,6 +30,13 @@ unicode_fraction = \u00BC | \u00BD | \u00BE | ...
 
 const {IngredientItemId, Amount, Word, SectionHeader} = recipeTokenVocabulary
 
+/**
+ * Constructs a concrete syntax tree that holds the [ingredients] element as root. The [ingredients]
+ * can have children of type [ingredient-items] or [section]. The [section] has [ingredient-item] as
+ * children. The [ingredient-item] have children [ingredient-item-id], [amount], and [ingredient]. The
+ * [ingredient-item-id] is an optional leaf. The [amount] has children [quantity] and [unit]. And the
+ * [ingredient] holds the ingredient. ![cst-nodes](../docs/images/cst-node-types.png)
+ */
 export class RecipeParser extends CstParser {
     constructor() {
         super(recipeTokenVocabulary);
@@ -53,7 +60,9 @@ export class RecipeParser extends CstParser {
             }
         })
     })
-    // a section in the ingredient list. for example, the ingredients to make a dough, or a sauce
+    // a section in the ingredient list. for example, the ingredients to make a dough, or a sauce.
+    // want the section to be the parent node to the ingredients that follow, until a new section
+    // header is encountered.
     section = this.RULE("section", () => {
         this.CONSUME(SectionHeader)
         this.AT_LEAST_ONE({
