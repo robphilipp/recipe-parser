@@ -160,9 +160,21 @@ describe("when using the recipe lexer for section headers", () => {
         expect(result.tokens[4].payload).toEqual({quantity: [1, 1], unit: 'tsp'})
     })
     it("should be able to lex a multi-line set of ingredients with section headers", () => {
-        const {tokens} = lex(`1 lb sugar\n#dough\n1 1/2 cp all-purpose flour\n1 tsp vanilla extract\n#sauce#\n1 cup milk`)
+        const {tokens} = lex(`1 lb sugar#dough\n1 1/2 cp all-purpose flour\n1 tsp vanilla extract#sauce#\n1 cup milk`)
         expect(tokens.map(tkn => tkn.image)).toEqual([
             "1 lb", "sugar", "#dough", "1 1/2 cp", "all-purpose", "flour", "1 tsp", "vanilla", "extract", "#sauce#", "1 cup", "milk"
+        ])
+        expect(tokens.map(tkn => tkn.tokenType.name)).toEqual([
+            "Amount", "Word", "SectionHeader", "Amount", "Word", "Word", "Amount", "Word", "Word", "SectionHeader", "Amount", "Word"
+        ])
+    })
+    it("should be able to lex a multi-line set of ingredients with section newline headers", () => {
+        const {tokens} = lex(`1 lb sugar\ndough\n1 1/2 cp all-purpose flour\n1 tsp vanilla extract\nsauce\n1 cup milk`)
+        expect(tokens.map(tkn => tkn.image)).toEqual([
+            "1 lb", "sugar", "dough", "1 1/2 cp", "all-purpose", "flour", "1 tsp", "vanilla", "extract", "sauce", "1 cup", "milk"
+        ])
+        expect(tokens.map(tkn => tkn.tokenType.name)).toEqual([
+            "Amount", "Word", "Word", "Amount", "Word", "Word", "Amount", "Word", "Word", "Word", "Amount", "Word"
         ])
     })
 })
