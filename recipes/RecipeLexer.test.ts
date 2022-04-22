@@ -1,4 +1,5 @@
 import {lex} from "./RecipeLexer";
+import {parse} from "./RecipeParser";
 
 describe("when using the recipe lexer for ingredients", () => {
     it("should be able to tokenize a list of valid numbers", () => {
@@ -157,5 +158,11 @@ describe("when using the recipe lexer for section headers", () => {
             .toEqual(["1 1/2 cup", "all", "purpose", "flour", "1 tsp", "vanilla"])
         expect(result.tokens[0].payload).toEqual({quantity: [3, 2], unit: 'cup'})
         expect(result.tokens[4].payload).toEqual({quantity: [1, 1], unit: 'tsp'})
+    })
+    it("should be able to lex a multi-line set of ingredients with section headers", () => {
+        const {tokens} = lex(`1 lb sugar\n#dough\n1 1/2 cp all-purpose flour\n1 tsp vanilla extract\n#sauce#\n1 cup milk`)
+        expect(tokens.map(tkn => tkn.image)).toEqual([
+            "1 lb", "sugar", "#dough", "1 1/2 cp", "all-purpose", "flour", "1 tsp", "vanilla", "extract", "#sauce#", "1 cup", "milk"
+        ])
     })
 })

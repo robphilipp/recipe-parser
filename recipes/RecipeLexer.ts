@@ -111,7 +111,7 @@ const SectionHeader = createToken({
  * Holds the tokens used to parse the recipe. **Note** that the *order* in which these appear *matters*.
  */
 export const recipeTokens = [
-    // NewLine,
+    NewLine,
     WhiteSpace,
     IngredientItemId,
     Amount, Quantity, WholeFraction, UnicodeFraction, Fraction, Decimal, Integer,
