@@ -30,11 +30,22 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
 
     ingredients(ctx: IngredientsContext): Partial<RecipeAst> {
         // there are one or more ingredients, so we need to run through the list
-        const ingredients = ctx.ingredientItem.map(cstNode => this.visit(cstNode))
+        const ingredients = ctx.ingredientItem?.map(cstNode => this.visit(cstNode)) || []
+        const sections = ctx.section.flatMap(cstNode => this.visit(cstNode))
         return {
             type: 'ingredients',
-            ingredients
+            ingredients: [...ingredients, ...sections]
         }
+    }
+
+    section(ctx: SectionContext): Array<IngredientItemType> {
+        const section = ctx.SectionHeader[0].payload
+        const ingredients = ctx.ingredientItem.map(cstNode => this.visit(cstNode))
+        return ingredients.map(ingredient => ({...ingredient, section: section.header}))
+
+        // return {
+        //     section: ctx.SectionHeader[0].payload
+        // }
     }
 
     ingredientItemId(ctx: IngredientItemIdContext): { ingredientItemId: string } {
@@ -84,10 +95,16 @@ export function toRecipe(text: string): RecipeResult {
  */
 type IngredientsContext = CstChildrenDictionary & {
     ingredientItem: Array<CstNode>
+    section: Array<CstNode>
 }
 
 type IngredientItemIdContext = CstChildrenDictionary & {
     ingredientItemId: IToken
+}
+
+type SectionContext = CstChildrenDictionary & {
+    SectionHeader: Array<IToken>
+    ingredientItem: Array<CstNode>
 }
 
 type IngredientItemContext = CstChildrenDictionary & {
@@ -125,6 +142,10 @@ type IngredientAst = {
     ingredientItemId: string
     amount: AmountType
     ingredient: IngredientType
+}
+
+type SectionType = {
+    section: string
 }
 
 type IngredientItemType = {

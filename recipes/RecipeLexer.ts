@@ -456,7 +456,7 @@ function sectionMatcher(text: string, startOffset: number): CustomPatternMatcher
     }
 
     const matchLineBased = regexParts.regex("^{{NewLine}}*{{SectionHeader}}{{NewLine}}").exec(text.slice(startOffset))
-    if (matchLineBased !== null && startOffset > 0 && text.charAt(startOffset-1) === '\n') {
+    if (matchLineBased !== null && ((startOffset > 0 && text.charAt(startOffset-1) === '\n') || startOffset === 0)) {
         const result: CustomPatternMatcherReturn = [matchLineBased[0]]
         result.payload = {
             header: matchLineBased[0].replace(/[\n\r]/g, '')
