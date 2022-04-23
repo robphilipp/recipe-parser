@@ -105,6 +105,7 @@ const SectionHeader = createToken({
     name: "SectionHeader",
     pattern: sectionMatcher,
     longer_alt: Word,
+    line_breaks: false
 })
 
 /**
@@ -445,11 +446,20 @@ function sectionMatcher(text: string, startOffset: number): CustomPatternMatcher
     // if the text matches an amount, then we don't want the section to match
     if (amountMatcher(text, startOffset) !== null) return null
 
-    const match = regexParts.regex("^{{SectionHeader}}").exec(text.slice(startOffset))
+    const match = regexParts.regex("^#{{SectionHeader}}#?").exec(text.slice(startOffset))
     if (match !== null) {
         const result: CustomPatternMatcherReturn = [match[0]]
         result.payload = {
             header: match[0].replace(/^#/, '').replace(/#$/, '')
+        }
+        return result
+    }
+
+    const matchLineBased = regexParts.regex("^{{NewLine}}*{{SectionHeader}}{{NewLine}}").exec(text.slice(startOffset))
+    if (matchLineBased !== null && startOffset > 0 && text.charAt(startOffset-1) === '\n') {
+        const result: CustomPatternMatcherReturn = [matchLineBased[0]]
+        result.payload = {
+            header: matchLineBased[0].replace(/[\n\r]/g, '')
         }
         return result
     }

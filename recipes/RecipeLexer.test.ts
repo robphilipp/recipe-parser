@@ -171,10 +171,10 @@ describe("when using the recipe lexer for section headers", () => {
     it("should be able to lex a multi-line set of ingredients with section newline headers", () => {
         const {tokens} = lex(`1 lb sugar\ndough\n1 1/2 cp all-purpose flour\n1 tsp vanilla extract\nsauce\n1 cup milk`)
         expect(tokens.map(tkn => tkn.image)).toEqual([
-            "1 lb", "sugar", "dough", "1 1/2 cp", "all-purpose", "flour", "1 tsp", "vanilla", "extract", "sauce", "1 cup", "milk"
+            "1 lb", "sugar", "dough\n", "1 1/2 cp", "all-purpose", "flour", "1 tsp", "vanilla", "extract", "sauce\n", "1 cup", "milk"
         ])
         expect(tokens.map(tkn => tkn.tokenType.name)).toEqual([
-            "Amount", "Word", "Word", "Amount", "Word", "Word", "Amount", "Word", "Word", "Word", "Amount", "Word"
+            "Amount", "Word", "SectionHeader", "Amount", "Word", "Word", "Amount", "Word", "Word", "SectionHeader", "Amount", "Word"
         ])
     })
 })
