@@ -119,7 +119,6 @@ sauce
 1 egg`
 
         const {recipe, errors} = toRecipe(input, true)
-        expect(true).toBeTruthy()
         expect(recipe).toEqual({
             type: "ingredients",
             ingredients: [
@@ -137,5 +136,41 @@ sauce
             message: "unexpected character: ->,<- at offset: 54, skipped 1 characters."
         })
         expect(input[54]).toBe(',')
+    })
+    it("should be able to parse the piri piri chicken recipe", () => {
+        const input = `Powder
+2 tbsp sugar
+1 tbsp paprika
+1 tbsp coriander
+1 tbsp cumin
+1 1/2 tbsp salt
+2 tbsps new mexico chile powder
+Sauce
+3 cloves garlic
+8 fresno peppers
+1/3 cup lemon juice
+1/4 cup red wine vinegar
+Chicken
+1 whole chicken
+`
+        const {recipe, errors} = toRecipe(input, true)
+        expect(recipe).toEqual({
+            type: "ingredients",
+            ingredients: [
+                {amount: {quantity: 2, unit: UnitType.TABLESPOON}, ingredient: 'sugar', section: 'Powder', brand: null},
+                {amount: {quantity: 1, unit: UnitType.TABLESPOON}, ingredient: 'paprika', section: null, brand: null},
+                {amount: {quantity: 1, unit: UnitType.TABLESPOON}, ingredient: 'coriander', section: null, brand: null},
+                {amount: {quantity: 1, unit: UnitType.TABLESPOON}, ingredient: 'cumin', section: null, brand: null},
+                {amount: {quantity: 1.5, unit: UnitType.TABLESPOON}, ingredient: 'salt', section: null, brand: null},
+                {amount: {quantity: 2, unit: UnitType.TABLESPOON}, ingredient: 'new mexico chile powder', section: null, brand: null},
+
+                {amount: {quantity: 3, unit: UnitType.PIECE}, ingredient: 'cloves garlic', section: 'Sauce', brand: null},
+                {amount: {quantity: 8, unit: UnitType.PIECE}, ingredient: 'fresno peppers', section: null, brand: null},
+                {amount: {quantity: 0.3333333333333333, unit: UnitType.CUP}, ingredient: 'lemon juice', section: null, brand: null},
+                {amount: {quantity: 0.25, unit: UnitType.CUP}, ingredient: 'red wine vinegar', section: null, brand: null},
+
+                {amount: {quantity: 1, unit: UnitType.PIECE}, ingredient: 'whole chicken', section: 'Chicken', brand: null},
+            ]
+        })
     })
 })

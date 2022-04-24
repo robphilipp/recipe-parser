@@ -1,4 +1,4 @@
-import {parse, RecipeParser, RecipeParseResult} from "./RecipeParser";
+import {RecipeParser, RecipeParseResult} from "./RecipeParser";
 import {UnitType} from "./Units";
 import {CstChildrenDictionary, CstNode, ILexingError, IToken} from "chevrotain";
 import {lex} from "./RecipeLexer";
@@ -16,21 +16,32 @@ type Ingredient = {
     amount: Amount
 }
 
-// a new parser instance with the concrete syntax tree (CST) output (enabled by default)
-const parserInstance = new RecipeParser()
-
+/**
+ * The result of the lexing, parsing, and visiting.
+ */
 export type RecipeResult = {
     recipe: RecipeAst,
     errors: Array<ILexingError>
 }
 
-// the base visitor class
+// a new parser instance that will hold the concrete syntax tree (CST) output (enabled by default)
+// when the parsing is complete
+const parserInstance = new RecipeParser()
+// the base visitor class used to convert the CST into the RecipeResult object
 const BaseRecipeVisitor = parserInstance.getBaseCstVisitorConstructor<RecipeParser, any>()
 
 /**
  * The visitor that constructs the
  */
 export class RecipeCstVisitor extends BaseRecipeVisitor {
+
+    /**
+     * @param deDupSections When `true`, then only the first ingredient in each section will have
+     * the section property set and the remaining ingredients will have null. When `false` each
+     * ingredient will have the section field set to the current section (or null if not part of
+     * a section)
+     * @constructor
+     */
     constructor(deDupSections: boolean = false) {
         super()
         this.validateVisitor()
@@ -38,21 +49,34 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
         this.deDupSections = deDupSections
     }
 
-    deDupSections = false
+    // whether only the first ingredient will have the current section property set
+    readonly deDupSections
 
-    ingredients(ctx: IngredientsContext): Partial<RecipeAst> {
+    /**
+     * Entry point for the ingredients
+     * @param context The ingredient context that holds the ingredients and sections
+     * @return The recipe object
+     */
+    ingredients(context: IngredientsContext): RecipeAst {
         // there are one or more ingredients, so we need to run through the list
-        const ingredients = ctx.ingredientItem?.map(cstNode => this.visit(cstNode)) || []
-        const sections = ctx.section?.flatMap(cstNode => this.visit(cstNode)) || []
+        const ingredients = context.ingredientItem?.map(cstNode => this.visit(cstNode)) || []
+        const sections = context.section?.flatMap(cstNode => this.visit(cstNode)) || []
         return {
             type: 'ingredients',
             ingredients: [...ingredients, ...sections]
         }
     }
 
-    section(ctx: SectionContext): Array<IngredientItemType> {
-        const section = ctx.SectionHeader[0].payload
-        const ingredients = ctx.ingredientItem.map(cstNode => this.visit(cstNode))
+    /**
+     * Visited for the section nodes. A section has a header and a list of ingredients, which are
+     * visited from here.
+     * @param context The section context that holds the sections and the list of ingredients that
+     * belong to that section.
+     * @return An array of ingredient items (list id, amount, ingredient, section, brand)
+     */
+    section(context: SectionContext): Array<IngredientItemType> {
+        const section = context.SectionHeader[0].payload
+        const ingredients = context.ingredientItem.map(cstNode => this.visit(cstNode))
         // when user only wants the first ingredient to have the section header set, then de-dup it true
         if (this.deDupSections && ingredients.length > 0) {
             const updated = ingredients.map(ingredient => ({...ingredient, section: null, brand: null}))
@@ -62,33 +86,56 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
         return ingredients.map(ingredient => ({...ingredient, section: section.header, brand: null}))
     }
 
+    /**
+     * Called by the ingredient item visitor and the shamelessly ignored to pull out the ingredient-item's
+     * list ID (i.e. 1. or 1) or * or -, etc).
+     * @param context The context holding the ingredient-item's list ID, if it has one
+     * @return The ingredient-item's list ID
+     */
     // noinspection JSUnusedGlobalSymbols
-    ingredientItemId(ctx: IngredientItemIdContext): { ingredientItemId: string } {
-        const ingredientItemId = ctx.ingredientItemId.image
+    ingredientItemId(context: IngredientItemIdContext): { ingredientItemId: string } {
+        const ingredientItemId = context.ingredientItemId.image
         return {
             ingredientItemId
         }
     }
 
-    ingredientItem(ctx: IngredientItemContext): IngredientItemType {
-        const amount = this.visit(ctx.amount)
-        const ingredient = this.visit(ctx.ingredient)
+    /**
+     * Visited for ingredient-items
+     * @param context The ingredient item context that holds the amount, ingredient, section, and brand
+     * @return The ingredient item
+     */
+    ingredientItem(context: IngredientItemContext): IngredientItemType {
+        const amount = this.visit(context.amount)
+        const ingredient = this.visit(context.ingredient)
 
         return {
             amount, ingredient, section: null, brand: null
         }
     }
 
-    amount(ctx: AmountContext): AmountType {
-        const {quantity, unit} = ctx.Amount[0].payload
+    /**
+     * Visited by the ingredient item for the amount, which is the quantity and unit
+     * @param context The context holding the quantity and the unit
+     * @return The amount
+     */
+    amount(context: AmountContext): AmountType {
+        const {quantity, unit} = context.Amount[0].payload
         const [numerator, denominator] = quantity
         return {quantity: numerator / denominator, unit}
     }
 
-    ingredient(ctx: IngredientContext): string {
-        return ctx.Word.map(i => i.image).join(" ")
+    /**
+     * Visited by the ingredient item for the ingredient (as list of words).
+     * @param context The context holding the list of words representing the ingredient
+     * @return The string of the concatenated words representing the ingredient
+     */
+    ingredient(context: IngredientContext): string {
+        return context.Word.map(i => i.image).join(" ")
     }
 }
+
+// singleton recipe object that can be recreated with a different configuration
 let toAstVisitorInstance: RecipeCstVisitor
 
 /**
