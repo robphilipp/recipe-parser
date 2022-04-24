@@ -86,13 +86,13 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
         return ingredients.map(ingredient => ({...ingredient, section: section.header, brand: null}))
     }
 
+    // noinspection JSUnusedGlobalSymbols
     /**
      * Called by the ingredient item visitor and the shamelessly ignored to pull out the ingredient-item's
      * list ID (i.e. 1. or 1) or * or -, etc).
      * @param context The context holding the ingredient-item's list ID, if it has one
      * @return The ingredient-item's list ID
      */
-    // noinspection JSUnusedGlobalSymbols
     ingredientItemId(context: IngredientItemIdContext): { ingredientItemId: string } {
         const ingredientItemId = context.ingredientItemId.image
         return {
