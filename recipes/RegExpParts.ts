@@ -1,33 +1,5 @@
 import XRegExp from "xregexp";
 
-/* -- ingredients
-
-in ABNF (https://matt.might.net/articles/grammars-bnf-ebnf/)
-
-section = "/n" section_header "/n" (1*ingredient / 1*step / story / timing / note / yield / rating)
-
-section_header = 1*word
-
-ingredient = [list_item_id whitespace] amount
-
-white_space = *( " " / "\t" )
-list_item_id = ( [ "(" ] number [ "." / ")" / ":" ] ) / ( [ "-" / "*" / "•" ])
-
-amount = [modifier] [white_space] quantity [white_space] [unit] [ "." ]
-modifier = approx / approximately / about / "~" / around
-quantity = number / fraction
-unit = (cup / tsp / tbsp (.... see units in recipes ui))["."]
-
-number = integer / decimal / (integer unicode_fraction)
-integer :: = 0 / (natural_digit *digit)
-decimal :: integer "." 1*digit
-fraction = integer "/" natural_digit *digit
-natural_digit = 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9
-digit = 0 / natural_digit
-unicode_fraction = \u00BC | \u00BD | \u00BE | ...
- */
-
-
 /**
  * Immutable.
  *
