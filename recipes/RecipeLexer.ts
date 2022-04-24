@@ -130,7 +130,7 @@ export const recipeTokenVocabulary = recipeTokens.reduce((vocab, token) => {
 // todo see multi-mode lexing https://github.com/Chevrotain/chevrotain/blob/master/examples/lexer/multi_mode_lexer/multi_mode_lexer.js
 //      so that each section have a mode
 
-const RecipeLexer = new Lexer(recipeTokens)
+let recipeLexer: Lexer
 
 /**
  * Converts the input text into a lexing result that can be parsed into an AST or CST.
@@ -138,7 +138,10 @@ const RecipeLexer = new Lexer(recipeTokens)
  * @return The {@link ILexingResult} object holding the result of the lexing operation
  */
 export function lex(input: string): ILexingResult {
-    const result = RecipeLexer.tokenize(input)
+    if (recipeLexer === undefined) {
+        recipeLexer = new Lexer(recipeTokens)
+    }
+    const result = recipeLexer.tokenize(input)
 
     if (result.errors.length > 0) {
         console.warn(`Failed lexing with errors: ${result.errors.map(error => error.message).join(";")}`)

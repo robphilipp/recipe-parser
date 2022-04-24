@@ -97,7 +97,7 @@ export class RecipeParser extends CstParser {
     })
 }
 
-const parserInstance = new RecipeParser()
+let parserInstance: RecipeParser
 
 export type RecipeParseResult = {
     parserInstance: RecipeParser,
@@ -106,6 +106,12 @@ export type RecipeParseResult = {
 }
 
 export function parse(input: string): RecipeParseResult {
+    if (parserInstance === undefined) {
+        parserInstance = new RecipeParser()
+    } else {
+        parserInstance.reset()
+    }
+
     const lexingResult = lex(input)
 
     parserInstance.input = lexingResult.tokens

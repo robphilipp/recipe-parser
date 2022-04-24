@@ -1,9 +1,7 @@
-import {parse, RecipeParser} from "./RecipeParser";
+import {parse, RecipeParser, RecipeParseResult} from "./RecipeParser";
 import {UnitType} from "./Units";
 import {CstChildrenDictionary, CstNode, ILexingError, IToken} from "chevrotain";
-
-// a new parser instance with the concrete syntax tree (CST) output (enabled by default)
-const parserInstance = new RecipeParser()
+import {lex} from "./RecipeLexer";
 
 type Amount = {
     value: number
@@ -18,14 +16,29 @@ type Ingredient = {
     amount: Amount
 }
 
+// a new parser instance with the concrete syntax tree (CST) output (enabled by default)
+const parserInstance = new RecipeParser()
+
+export type RecipeResult = {
+    recipe: RecipeAst,
+    errors: Array<ILexingError>
+}
+
 // the base visitor class
 const BaseRecipeVisitor = parserInstance.getBaseCstVisitorConstructor<RecipeParser, any>()
 
+/**
+ * The visitor that constructs the
+ */
 export class RecipeCstVisitor extends BaseRecipeVisitor {
-    constructor() {
+    constructor(deDupSections: boolean = false) {
         super()
         this.validateVisitor()
+
+        this.deDupSections = deDupSections
     }
+
+    deDupSections = false
 
     ingredients(ctx: IngredientsContext): Partial<RecipeAst> {
         // there are one or more ingredients, so we need to run through the list
@@ -40,7 +53,13 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
     section(ctx: SectionContext): Array<IngredientItemType> {
         const section = ctx.SectionHeader[0].payload
         const ingredients = ctx.ingredientItem.map(cstNode => this.visit(cstNode))
-        return ingredients.map(ingredient => ({...ingredient, section: section.header}))
+        // when user only wants the first ingredient to have the section header set, then de-dup it true
+        if (this.deDupSections && ingredients.length > 0) {
+            const updated = ingredients.map(ingredient => ({...ingredient, section: null, brand: null}))
+            updated[0].section = section.header
+            return updated
+        }
+        return ingredients.map(ingredient => ({...ingredient, section: section.header, brand: null}))
     }
 
     // noinspection JSUnusedGlobalSymbols
@@ -56,7 +75,7 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
         const ingredient = this.visit(ctx.ingredient)
 
         return {
-            amount, ingredient
+            amount, ingredient, section: null, brand: null
         }
     }
 
@@ -70,16 +89,37 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
         return ctx.Word.map(i => i.image).join(" ")
     }
 }
+let toAstVisitorInstance: RecipeCstVisitor
 
-const toAstVisitorInstance = new RecipeCstVisitor()
+/**
+ * Converts the text to a list of recipe ingredients with optional sections.
+ * @param text The text to convert into a recipe object
+ * @param deDupSections When set to `true` only sets the section of the first ingredient of each
+ * section to current section.
+ * @return A recipe result holding the recipe object and any parsing errors
+ */
+export function toRecipe(text: string, deDupSections: boolean = false): RecipeResult {
+    if (toAstVisitorInstance === undefined || toAstVisitorInstance.deDupSections !== deDupSections) {
+        toAstVisitorInstance = new RecipeCstVisitor(deDupSections)
+    }
 
-export type RecipeResult = {
-    recipe: RecipeAst,
-    errors: Array<ILexingError>
-}
+    function parse(input: string): RecipeParseResult {
+        if (parserInstance !== undefined) {
+            parserInstance.reset()
+        }
+        if (parserInstance === null) throw Error("Parser instance is null")
 
-export function toRecipe(text: string): RecipeResult {
+        const lexingResult = lex(input)
+
+        parserInstance.input = lexingResult.tokens
+
+        const cst = parserInstance.ingredients()
+
+        return {parserInstance, cst, lexingResult}
+    }
+
     const {cst, lexingResult} = parse(text)
+
     return {
         recipe: toAstVisitorInstance.visit(cst),
         errors: lexingResult.errors
@@ -128,6 +168,8 @@ type RecipeAst = {
 type IngredientItemType = {
     amount: AmountType
     ingredient: string
+    section: string | null
+    brand: string | null
 }
 
 type AmountType = {
