@@ -87,7 +87,6 @@ const Word = createToken({
 })
 const WhiteSpace = createToken({
     name: "WhiteSpace",
-    // pattern: /\s+/,
     pattern: regexParts.regex("{{WhiteSpace}}"),
     group: Lexer.SKIPPED
 })
@@ -98,7 +97,7 @@ const NewLine = createToken({
 })
 const IngredientItemId = createToken({
     name: "IngredientItemId",
-    pattern: /(\(?\d+((.\))|[.):]))|[*•-]/,
+    pattern: /(\(?\d+((.\))|[.):]))|[*•-]\w*/,
     longer_alt: Decimal,
 })
 const SectionHeader = createToken({
