@@ -2,7 +2,25 @@
 
 > This is work in progress.
 
-This recipe parser currently parses lists of ingredients, with optional sections, into a JSON object. For example, the parser will parse
+A shout-out to the awesome libraries the recipe parser relies on
+
+1. [chevrotain](https://chevrotain.io/docs/) for lexing, parsing, and semantics.
+2. [natural](https://github.com/NaturalNode/natural) for pluralization and phonetics.
+3. [XRegExp](https://github.com/slevithan/xregexp) for sanity using regular expressions.
+
+This recipe parser currently parses lists of ingredients, with optional sections, into a JSON object. For example, the following code
+
+```typescript
+const {recipe, errors} = toRecipe(`dough
+        1 1/2 cp all-purpose flour
+        1 tsp vanilla extract,
+        sauce
+        1 cup milk
+        1 egg`
+)
+```
+
+will parse
 
 ```text
 dough
@@ -72,26 +90,27 @@ sauce
         type: "ingredients",
         ingredients: [
             {
-                amount: {quantity: 1.5, unit: UnitType.CUP}, 
-                ingredient: 'all-purpose flour', 
+                amount: {quantity: 1.5, unit: UnitType.CUP},
+                ingredient: 'all-purpose flour',
                 section: 'dough'
             },
             {
                 amount: {quantity: 1, unit: UnitType.TEASPOON},
-                ingredient: 'vanilla extract', 
+                ingredient: 'vanilla extract',
                 section: 'dough'
             },
             {
-                amount: {quantity: 1, unit: UnitType.CUP}, 
-                ingredient: 'milk', 
+                amount: {quantity: 1, unit: UnitType.CUP},
+                ingredient: 'milk',
                 section: 'sauce'
             },
             {
-                amount: {quantity: 1, unit: UnitType.PIECE}, 
-                ingredient: 'egg', 
+                amount: {quantity: 1, unit: UnitType.PIECE},
+                ingredient: 'egg',
                 section: 'sauce'
             },
-        ]})
+        ]
+    })
     expect(errors).toHaveLength(1)
     expect(errors[0]).toEqual({
         offset: 54,
@@ -107,7 +126,9 @@ sauce
 ## the grammar
 
 In order for a recipe's ingredients to be parsed, then must adhere to the following grammar, which uses the
-[Augmented Backus-Naur Form (ABNF)](https://en.wikipedia.org/wiki/Augmented_Backus–Naur_form) notation ([see this nice article](https://matt.might.net/articles/grammars-bnf-ebnf/)) for an introduction to grammar notations.
+[Augmented Backus-Naur Form (ABNF)](https://en.wikipedia.org/wiki/Augmented_Backus–Naur_form)
+notation ([see this nice article](https://matt.might.net/articles/grammars-bnf-ebnf/)) for an introduction to grammar
+notations.
 
 ```
 // an ingredient list has either sections or ingredient itmes or both
@@ -157,3 +178,8 @@ unicode_fraction = \u00BC | \u00BD | \u00BE | ...
 newline = "\n" / "\r\n"
 white_space = *( " " / "\t" )
 ```
+
+Recipes using this grammar get parsed into the following syntax tree structure.
+
+![recipe syntax tree](docs/images/cst-node-types.png)
+
