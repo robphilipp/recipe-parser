@@ -1,7 +1,6 @@
 import {parse, RecipeParser} from "./RecipeParser";
 import {UnitType} from "./Units";
-import {CstChildrenDictionary, CstElement, CstNode, ILexingError, IToken} from "chevrotain";
-import {Fraction} from "./Numbers";
+import {CstChildrenDictionary, CstNode, ILexingError, IToken} from "chevrotain";
 
 // a new parser instance with the concrete syntax tree (CST) output (enabled by default)
 const parserInstance = new RecipeParser()
@@ -31,7 +30,7 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
     ingredients(ctx: IngredientsContext): Partial<RecipeAst> {
         // there are one or more ingredients, so we need to run through the list
         const ingredients = ctx.ingredientItem?.map(cstNode => this.visit(cstNode)) || []
-        const sections = ctx.section.flatMap(cstNode => this.visit(cstNode))
+        const sections = ctx.section?.flatMap(cstNode => this.visit(cstNode)) || []
         return {
             type: 'ingredients',
             ingredients: [...ingredients, ...sections]
@@ -42,12 +41,9 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
         const section = ctx.SectionHeader[0].payload
         const ingredients = ctx.ingredientItem.map(cstNode => this.visit(cstNode))
         return ingredients.map(ingredient => ({...ingredient, section: section.header}))
-
-        // return {
-        //     section: ctx.SectionHeader[0].payload
-        // }
     }
 
+    // noinspection JSUnusedGlobalSymbols
     ingredientItemId(ctx: IngredientItemIdContext): { ingredientItemId: string } {
         const ingredientItemId = ctx.ingredientItemId.image
         return {
@@ -117,14 +113,6 @@ type AmountContext = CstChildrenDictionary & {
     Amount: Array<IToken>
 }
 
-type QuantityContext = CstChildrenDictionary & {
-    quantity: Fraction
-}
-
-type UnitContext = CstChildrenDictionary & {
-    unit: UnitType
-}
-
 type IngredientContext = CstChildrenDictionary & {
     Word: Array<IToken>
 }
@@ -137,28 +125,12 @@ type RecipeAst = {
     ingredients: Array<Ingredient>
 }
 
-type IngredientAst = {
-    type: string
-    ingredientItemId: string
-    amount: AmountType
-    ingredient: IngredientType
-}
-
-type SectionType = {
-    section: string
-}
-
 type IngredientItemType = {
     amount: AmountType
     ingredient: string
 }
 
 type AmountType = {
-    // quantity: Fraction
     quantity: number
     unit: UnitType
-}
-
-type IngredientType = {
-    ingredient: string
 }

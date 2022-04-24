@@ -142,7 +142,6 @@ export function lex(input: string): ILexingResult {
 
     if (result.errors.length > 0) {
         console.warn(`Failed lexing with errors: ${result.errors.map(error => error.message).join(";")}`)
-        // throw Error(`Failed lexing with errors: ${result.errors.map(error => error.message).join(";")}`)
     }
 
     return result
@@ -279,7 +278,6 @@ function matchUnicodeFraction(text: string, startOffset: number): CustomPatternM
         if (isValidFraction([numerator, denominator])) {
             const result: CustomPatternMatcherReturn = [text.slice(startOffset, startOffset + integer.length + i)]
             result.payload = [parseInt(integer) * denominator + numerator, denominator]
-            // result.payload = [parseInt(currentChar.trim()) * denominator + numerator, denominator]
             return result
         }
     }
