@@ -93,10 +93,10 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
      * @param context The context holding the ingredient-item's list ID, if it has one
      * @return The ingredient-item's list ID
      */
-    ingredientItemId(context: IngredientItemIdContext): { ingredientItemId: string } {
-        const ingredientItemId = context.ingredientItemId.image
+    listItemId(context: ListItemIdContext): { listItemId: string } {
+        const listItemId = context.listItemId.image
         return {
-            ingredientItemId
+            listItemId: listItemId
         }
     }
 
@@ -143,23 +143,27 @@ let toAstVisitorInstance: RecipeCstVisitor
  * @param text The text to convert into a recipe object
  * @param deDupSections When set to `true` only sets the section of the first ingredient of each
  * section to current section.
+ * @param [logWarnings = false] When set to `true` then logs warning to the console, otherwise
+ * does not log warnings. Warning and errors are reported in the returned object in either case.
  * @return A recipe result holding the recipe object and any parsing errors
  */
-export function toRecipe(text: string, deDupSections: boolean = false): RecipeResult {
+export function toRecipe(
+    text: string,
+    deDupSections: boolean = false,
+    logWarnings: boolean = false
+): RecipeResult {
     if (toAstVisitorInstance === undefined || toAstVisitorInstance.deDupSections !== deDupSections) {
         toAstVisitorInstance = new RecipeCstVisitor(deDupSections)
     }
 
     function parse(input: string): RecipeParseResult {
+        const lexingResult = lex(input, logWarnings)
+
         if (parserInstance !== undefined) {
             parserInstance.reset()
         }
         if (parserInstance === null) throw Error("Parser instance is null")
-
-        const lexingResult = lex(input)
-
         parserInstance.input = lexingResult.tokens
-
         const cst = parserInstance.ingredients()
 
         return {parserInstance, cst, lexingResult}
@@ -181,8 +185,8 @@ type IngredientsContext = CstChildrenDictionary & {
     section: Array<CstNode>
 }
 
-type IngredientItemIdContext = CstChildrenDictionary & {
-    ingredientItemId: IToken
+type ListItemIdContext = CstChildrenDictionary & {
+    listItemId: IToken
 }
 
 type SectionContext = CstChildrenDictionary & {

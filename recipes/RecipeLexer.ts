@@ -4,34 +4,6 @@ import {CustomPatternMatcherReturn} from "@chevrotain/types";
 import {Fraction, fractionFromUnicode, isValidFraction} from "./Numbers";
 import {regexParts} from "./RegExpParts";
 
-
-/* -- ingredients
-
-in ABNF (https://matt.might.net/articles/grammars-bnf-ebnf/)
-
-ingredient_item = [ingredient_item_id 1*whitespace] amount ingredient
-
-white_space = *( " " / "\t" )
-ingredient_item_id = ( [ "(" ] number [ "." / ")" / ":" ] ) / ( [ "-" / "*" / "•" ])
-
-amount = [modifier] [white_space] quantity [white_space] [unit] [ "." ]
-modifier :== approx / approximately / about / "~" / around
-quantity = number / fraction
-unit = (cup / tsp / tbsp (.... see units in recipes ui))["."]
-
-ingredient = *word newline
-word = 1*("w" / "." / "'" / "(" / ")" / "[" / "]" / "{" / "}" / "-")
-newline = "\n" / | "\r\n"
-
-number = integer / decimal / (integer unicode_fraction)
-integer :: = 0 / (natural_digit *digit)
-decimal :: integer "." 1*digit
-fraction = integer "/" natural_digit *digit
-natural_digit = 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9
-digit = 0 / natural_digit
-unicode_fraction = \u00BC | \u00BD | \u00BE | ...
- */
-
 /*
  | NUMBERS
  */
@@ -95,8 +67,8 @@ const NewLine = createToken({
     pattern: regexParts.regex("{{NewLine}}"),
     group: Lexer.SKIPPED
 })
-const IngredientItemId = createToken({
-    name: "IngredientItemId",
+const ListItemId = createToken({
+    name: "ListItemId",
     pattern: /(\(?\d+((.\))|[.):]))|[*•-]\w*/,
     longer_alt: Decimal,
 })
@@ -113,7 +85,7 @@ const SectionHeader = createToken({
 export const recipeTokens = [
     NewLine,
     WhiteSpace,
-    IngredientItemId,
+    ListItemId,
     Amount, Quantity, WholeFraction, UnicodeFraction, Fraction, Decimal, Integer,
     Unit,
     SectionHeader,
@@ -134,15 +106,17 @@ let recipeLexer: Lexer
 /**
  * Converts the input text into a lexing result that can be parsed into an AST or CST.
  * @param input The input string
+ * @param [logWarnings = false] When set to `true` then logs warning to the console, otherwise
+ * does not log warnings. Warning and errors are reported in the returned object in either case.
  * @return The {@link ILexingResult} object holding the result of the lexing operation
  */
-export function lex(input: string): ILexingResult {
+export function lex(input: string, logWarnings: boolean = false): ILexingResult {
     if (recipeLexer === undefined) {
         recipeLexer = new Lexer(recipeTokens)
     }
     const result = recipeLexer.tokenize(input)
 
-    if (result.errors.length > 0) {
+    if (logWarnings && result.errors.length > 0) {
         console.warn(`Failed lexing with errors: ${result.errors.map(error => error.message).join(";")}`)
     }
 

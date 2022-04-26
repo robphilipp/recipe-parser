@@ -1,7 +1,7 @@
 import {CstNode, CstParser, ILexingResult} from "chevrotain";
 import {lex, recipeTokenVocabulary} from "./RecipeLexer";
 
-const {IngredientItemId, Amount, Word, SectionHeader} = recipeTokenVocabulary
+const {ListItemId, Amount, Word, SectionHeader} = recipeTokenVocabulary
 
 /**
  * Constructs a concrete syntax tree that holds the [ingredients] element as root. The [ingredients]
@@ -47,14 +47,14 @@ export class RecipeParser extends CstParser {
     // an ingredient, possibly as a numbered or bulleted list
     ingredientItem = this.RULE("ingredientItem", () => {
         this.OPTION(() => {
-            this.SUBRULE(this.ingredientItemId)
+            this.SUBRULE(this.listItemId)
         })
         this.SUBRULE(this.amount)
         this.SUBRULE(this.ingredient)
     })
     // the number or bullet of the list
-    ingredientItemId = this.RULE("ingredientItemId", () => {
-        this.CONSUME(IngredientItemId)
+    listItemId = this.RULE("listItemId", () => {
+        this.CONSUME(ListItemId)
     })
     // the amount (e.g. 1 cup)
     amount = this.RULE("amount", () => {

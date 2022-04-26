@@ -1,9 +1,8 @@
 import {lex} from "./RecipeLexer";
-import {parse} from "./RecipeParser";
 
 describe("when using the recipe lexer for ingredients", () => {
     it("should be able to tokenize a list of valid numbers", () => {
-        const result = lex("0.333 314 3/2")
+        const result = lex("0.333 314 3/2", false)
         expect(result.tokens.map(token => token.image)).toEqual(["0.333", "314 3/2"])
     })
     it("should be able to tokenize a list of valid numbers with one invalid number", () => {
