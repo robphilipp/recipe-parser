@@ -20,7 +20,7 @@ const {recipe, errors} = toRecipe(`dough
 )
 ```
 
-will parse
+will parse the specified ingredients and sections
 
 ```text
 dough
