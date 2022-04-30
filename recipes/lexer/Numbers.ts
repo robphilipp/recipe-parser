@@ -1,5 +1,3 @@
-import {CustomPatternMatcherReturn} from "@chevrotain/types";
-
 export type Fraction = [numerator: number, denominator: number]
 
 /**

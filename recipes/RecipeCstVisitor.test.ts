@@ -1,5 +1,5 @@
 import {toRecipe} from "./RecipeCstVisitor";
-import {UnitType} from "./Units";
+import {UnitType} from "./lexer/Units";
 
 describe("when creating an ast", () => {
     it("should be able to build recipe from ingredients", () => {
@@ -139,7 +139,7 @@ describe("when creating an ast", () => {
         expect(input[78]).toBe(',')
     })
     it("should be able to parse the piri piri chicken recipe", () => {
-        const input = `
+        const input = `Ingredients
         Powder
             2 tbsp sugar
             1 tbsp paprika

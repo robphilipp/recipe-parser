@@ -1,5 +1,6 @@
 import {CstNode, CstParser, ILexingResult} from "chevrotain";
-import {lex, recipeTokenVocabulary} from "./RecipeLexer";
+import {lex, multiModeLexerDefinition, recipeTokenVocabulary} from "./lexer/RecipeLexer";
+import {INGREDIENTS_HEADER, STEPS_HEADER} from "./lexer/matchers";
 
 const {ListItemId, Amount, Word, SectionHeader} = recipeTokenVocabulary
 
@@ -12,11 +13,43 @@ const {ListItemId, Amount, Word, SectionHeader} = recipeTokenVocabulary
  */
 export class RecipeParser extends CstParser {
     constructor() {
-        super(recipeTokenVocabulary);
+        super(multiModeLexerDefinition);
+        // super(recipeTokenVocabulary);
 
         this.performSelfAnalysis()
     }
 
+    // list of sections (i.e. ingredients, steps, etc) that match the modes of the
+    // lexer. these are the elements of a recipe (i.e. story, meta, ingredients,
+    // steps, notes).
+    sections = this.RULE("sections", () => {
+        this.AT_LEAST_ONE({
+            DEF: () => {
+                this.OR([
+                    {
+                        GATE: () => this.LA(1).tokenType === SectionHeader &&
+                            this.LA(1).payload.header === INGREDIENTS_HEADER,
+                        ALT: () => {
+                            this.CONSUME(SectionHeader)
+                            this.SUBRULE(this.ingredients)
+                            // this.SUBRULE(this.ingredientsSection)
+                        }
+                    },
+                    {
+                        GATE: () => this.LA(1).tokenType === SectionHeader &&
+                            this.LA(1).payload.header === STEPS_HEADER,
+                        ALT: () => {
+                            // this.SUBRULE(this.steps)
+                        }
+                    }
+                ])
+            }
+        })
+    })
+
+    // NOTE: you can also start the parser at "ingredients" or "steps" rather than at
+    //       "sections"
+    //
     // list of ingredients can either have a section header, or an ingredient. if it has
     // a section header, then under that section header, there could be more ingredients
     ingredients = this.RULE("ingredients", () => {
@@ -33,6 +66,7 @@ export class RecipeParser extends CstParser {
             }
         })
     })
+
     // a section in the ingredient list. for example, the ingredients to make a dough, or a sauce.
     // want the section to be the parent node to the ingredients that follow, until a new section
     // header is encountered.
@@ -44,6 +78,7 @@ export class RecipeParser extends CstParser {
             }
         })
     })
+
     // an ingredient, possibly as a numbered or bulleted list
     ingredientItem = this.RULE("ingredientItem", () => {
         this.OPTION(() => {
@@ -52,14 +87,17 @@ export class RecipeParser extends CstParser {
         this.SUBRULE(this.amount)
         this.SUBRULE(this.ingredient)
     })
+
     // the number or bullet of the list
     listItemId = this.RULE("listItemId", () => {
         this.CONSUME(ListItemId)
     })
+
     // the amount (e.g. 1 cup)
     amount = this.RULE("amount", () => {
         this.CONSUME(Amount)
     })
+
     // the ingredient (e.g. all-purpose flour)
     ingredient = this.RULE("ingredient", () => {
         this.AT_LEAST_ONE({
@@ -89,7 +127,8 @@ export function parse(input: string): RecipeParseResult {
 
     parserInstance.input = lexingResult.tokens
 
-    const cst = parserInstance.ingredients()
+    const cst = parserInstance.sections()
+    // const cst = parserInstance.ingredients()
 
     return {parserInstance, cst, lexingResult}
 }

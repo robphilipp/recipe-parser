@@ -253,12 +253,19 @@ sauce
     })
     it("should work for sections containing items", () => {
         // const {parserInstance, cst} = parse(`1 lb sugar\ndough me\n1 1/2 cp all-purpose flour\n1 tsp vanilla extract\nsauce\n1 cup milk\n`)
-        const {parserInstance, cst} = parse(`dough me
+        const {parserInstance, cst} = parse(`ingredients
+        doughme
 1 1/2 cp all-purpose flour
 1 tsp vanilla extract
 sauce
 1 cup milk`
         )
+//         const {parserInstance, cst} = parse(`dough me
+// 1 1/2 cp all-purpose flour
+// 1 tsp vanilla extract
+// sauce
+// 1 cup milk`
+//         )
 
         expect(cst.name).toBe('ingredients')
         expect(cst.children).toBeDefined()

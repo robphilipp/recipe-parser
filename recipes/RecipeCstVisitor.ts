@@ -1,7 +1,7 @@
 import {RecipeParser, RecipeParseResult} from "./RecipeParser";
-import {UnitType} from "./Units";
+import {UnitType} from "./lexer/Units";
 import {CstChildrenDictionary, CstNode, ILexingError, IToken} from "chevrotain";
-import {lex} from "./RecipeLexer";
+import {lex} from "./lexer/RecipeLexer";
 
 type Amount = {
     value: number
