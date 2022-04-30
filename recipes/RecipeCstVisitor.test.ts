@@ -56,11 +56,11 @@ describe("when creating an ast", () => {
     })
     it("should be able to build recipe from ingredients with section headers", () => {
         const input = `#dough#
-1 1/2 cp all-purpose flour
-1 tsp vanilla extract,
-#sauce#
-1 cup milk
-1 egg`
+            1 1/2 cp all-purpose flour
+            1 tsp vanilla extract,
+            # sauce #
+            1 cup milk
+            1 egg`
 
         const {recipe, errors} = toRecipe(input)
         expect(true).toBeTruthy()
@@ -74,21 +74,22 @@ describe("when creating an ast", () => {
             ]})
         expect(errors).toHaveLength(1)
         expect(errors[0]).toEqual({
-            offset: 56,
+            offset: 80,
             line: 3,
-            column: 22,
+            column: 34,
             length: 1,
-            message: "unexpected character: ->,<- at offset: 56, skipped 1 characters."
+            message: "unexpected character: ->,<- at offset: 80, skipped 1 characters."
         })
-        expect(input[56]).toBe(',')
+        expect(input[80]).toBe(',')
     })
     it("should be able to build recipe from ingredients with section headers as newlines", () => {
-        const input = `dough
-1 1/2 cp all-purpose flour
-1 tsp vanilla extract,
-sauce
-1 cup milk
-1 egg`
+        const input = `  
+            dough
+            1 1/2 cp all-purpose flour
+            1 tsp vanilla extract,
+            sauce
+            1 cup milk
+            1 egg`
 
         const {recipe, errors} = toRecipe(input)
         expect(true).toBeTruthy()
@@ -102,21 +103,21 @@ sauce
             ]})
         expect(errors).toHaveLength(1)
         expect(errors[0]).toEqual({
-            offset: 54,
-            line: 2,
-            column: 22,
+            offset: 93,
+            line: 3,
+            column: 34,
             length: 1,
-            message: "unexpected character: ->,<- at offset: 54, skipped 1 characters."
+            message: "unexpected character: ->,<- at offset: 93, skipped 1 characters."
         })
-        expect(input[54]).toBe(',')
+        expect(input[93]).toBe(',')
     })
     it("should be able to build recipe from ingredients with section headers as newlines, de-dup sections", () => {
         const input = `dough
-1 1/2 cp all-purpose flour
-1 tsp vanilla extract,
-sauce
-1 cup milk
-1 egg`
+            1 1/2 cp all-purpose flour
+            1 tsp vanilla extract,
+            sauce
+            1 cup milk
+            1 egg`
 
         const {recipe, errors} = toRecipe(input, true)
         expect(recipe).toEqual({
@@ -129,30 +130,31 @@ sauce
             ]})
         expect(errors).toHaveLength(1)
         expect(errors[0]).toEqual({
-            offset: 54,
+            offset: 78,
             line: 2,
-            column: 22,
+            column: 34,
             length: 1,
-            message: "unexpected character: ->,<- at offset: 54, skipped 1 characters."
+            message: "unexpected character: ->,<- at offset: 78, skipped 1 characters."
         })
-        expect(input[54]).toBe(',')
+        expect(input[78]).toBe(',')
     })
     it("should be able to parse the piri piri chicken recipe", () => {
-        const input = `Powder
-2 tbsp sugar
-1 tbsp paprika
-1 tbsp coriander
-1 tbsp cumin
-1 1/2 tbsp salt
-2 tbsps new mexico chile powder
-Sauce
-3 cloves garlic
-8 fresno peppers
-1/3 cup lemon juice
-1/4 cup red wine vinegar
-Chicken
-1 whole chicken
-`
+        const input = `
+        Powder
+            2 tbsp sugar
+            1 tbsp paprika
+            1 tbsp coriander
+            1 tbsp cumin
+            1 1/2 tbsp salt
+            2 tbsps new mexico chile powder
+            Sauce
+            3 cloves garlic
+            8 fresno peppers
+            1/3 cup lemon juice
+            1/4 cup red wine vinegar
+            Chicken
+            1 whole chicken
+            `
         const {recipe, errors} = toRecipe(input, true)
         expect(recipe).toEqual({
             type: "ingredients",

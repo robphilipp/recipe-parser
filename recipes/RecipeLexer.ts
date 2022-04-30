@@ -420,17 +420,21 @@ function sectionMatcher(text: string, startOffset: number): CustomPatternMatcher
     // if the text matches an amount, then we don't want the section to match
     if (amountMatcher(text, startOffset) !== null) return null
 
-    const match = regexParts.regex("^#{{SectionHeader}}#?").exec(text.slice(startOffset))
+    const match = regexParts.regex("^#[ \t]*{{SectionHeader}}([ \t]*#)?").exec(text.slice(startOffset))
     if (match !== null) {
         const result: CustomPatternMatcherReturn = [match[0]]
         result.payload = {
-            header: match[0].replace(/^#/, '').replace(/#$/, '')
+            header: match[0]
+                .replace(/^#[ \t]*/, '')
+                .replace(/[ \t]*#$/, '')
         }
         return result
     }
 
-    const matchLineBased = regexParts.regex("^{{NewLine}}*{{SectionHeader}}{{NewLine}}").exec(text.slice(startOffset))
-    if (matchLineBased !== null && ((startOffset > 0 && text.charAt(startOffset-1) === '\n') || startOffset === 0)) {
+    const matchLineBased = regexParts
+        .regex("^{{NewLine}}*{{SectionHeader}}{{NewLine}}")
+        .exec(text.slice(startOffset))
+    if (matchLineBased !== null && (isLeadingValid(text, startOffset) || startOffset === 0)) {
         const result: CustomPatternMatcherReturn = [matchLineBased[0]]
         result.payload = {
             header: matchLineBased[0].replace(/[\n\r]/g, '')
@@ -438,6 +442,20 @@ function sectionMatcher(text: string, startOffset: number): CustomPatternMatcher
         return result
     }
     return null
+}
+
+/**
+ * Determines whether there are just has leading spaces or tabs after the newline
+ * @param text The text to search
+ * @param startOffset The current location in the text
+ * @return `true` if there are just leading spaces or table after the newline
+ */
+function isLeadingValid(text: string, startOffset: number): boolean {
+    if (startOffset === 0) return true
+    if (text.charAt(startOffset-1) === ' ' || text.charAt(startOffset-1) === '\t') {
+        return isLeadingValid(text, startOffset-1)
+    }
+    return text.charAt(startOffset - 1) == '\n';
 }
 
 /**

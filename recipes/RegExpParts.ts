@@ -59,7 +59,7 @@ export function newRegexParts(): RegExpParts {
 }
 
 export const regexParts = newRegexParts()
-    .add("SectionHeader", /\w+[\w ]*/.source)
+    .add("SectionHeader", /[\t\w ]+/.source)
     .add("NewLine", /(\n|\r\n)/.source)
     .add("WhiteSpace", /\s+/.source)
     .add("NaturalNumberPart", /[1-9]\d*/.source)
