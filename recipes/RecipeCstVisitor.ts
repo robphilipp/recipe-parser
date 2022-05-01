@@ -83,7 +83,7 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
     // ingredients(context: IngredientsContext): RecipeAst {
         // there are one or more ingredients, so we need to run through the list
         const ingredients = context.ingredientItem?.map(cstNode => this.visit(cstNode)) || []
-        const sections = context.section?.flatMap(cstNode => this.visit(cstNode)) || []
+        const sections = context.ingredientsSection?.flatMap(cstNode => this.visit(cstNode)) || []
         // return {
         //     type: 'ingredients',
         //     ingredients: [...ingredients, ...sections]
@@ -93,7 +93,7 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
 
     steps(context: StepsContext): Array<Step> {
         const steps = context.stepItem?.map(cstNode => this.visit(cstNode)) || []
-        const sections = context.section?.flatMap(cstNode => this.visit(cstNode)) || []
+        const sections = context.stepsSection?.flatMap(cstNode => this.visit(cstNode)) || []
         return [...steps, ...sections]
     }
 
@@ -147,11 +147,8 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
      * @param context The context holding the ingredient-item's list ID, if it has one
      * @return The ingredient-item's list ID
      */
-    listItemId(context: ListItemIdContext): { listItemId: string } {
-        const listItemId = context.listItemId.image
-        return {
-            listItemId: listItemId
-        }
+    listItemId(context: ListItemIdContext): string {
+        return context.ListItemId[0].image
     }
 
     /**
@@ -169,8 +166,9 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
     }
 
     stepItem(context: StepItemContext): StepItemType {
-        const {stepItemId, step} = this.visit(context.step)
-        return {id: stepItemId, step, title: null}
+        const listItemId = this.visit(context.listItemId)
+        const step = this.visit(context.step)
+        return {id: listItemId, step, title: null}
     }
 
     /**
@@ -251,17 +249,23 @@ type SectionsContext = CstChildrenDictionary & {
 
 type IngredientsContext = CstChildrenDictionary & {
     ingredientItem: Array<CstNode>
-    section: Array<CstNode>
+    ingredientsSection: Array<CstNode>
 }
 
 type StepsContext = CstChildrenDictionary & {
     stepItem: Array<CstNode>
-    section: Array<CstNode>
+    stepsSection: Array<CstNode>
 }
 
 type ListItemIdContext = CstChildrenDictionary & {
-    listItemId: IToken
+    // listItemId: IToken
+    // ListItemId: Array<CstNode>
+    ListItemId: Array<IToken>
 }
+
+// type ListItemIdTokenContext = CstChildrenDictionary & {
+//     ListItemId: Array<IToken>
+// }
 
 type IngredientsSectionContext = CstChildrenDictionary & {
     SectionHeader: Array<IToken>
@@ -280,7 +284,7 @@ type IngredientItemContext = CstChildrenDictionary & {
 }
 
 type StepItemContext = CstChildrenDictionary & {
-    stepItemId: IToken
+    listItemId: Array<CstNode>
     step: Array<CstNode>
 }
 
@@ -293,6 +297,7 @@ type IngredientContext = CstChildrenDictionary & {
 }
 
 type StepContext = CstChildrenDictionary & {
+    listItemId: IToken
     Word: Array<IToken>
 }
 

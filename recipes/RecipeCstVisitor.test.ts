@@ -141,8 +141,8 @@ describe("when creating an ast", () => {
     it("should be able to parse the piri piri chicken recipe", () => {
         const input = `Ingredients
         Powder
-            2 tbsp sugar
-            1 tbsp paprika
+            1. 2 tbsp sugar
+            2) 1 tbsp paprika
             1 tbsp coriander
             1 tbsp cumin
             1 1/2 tbsp salt
@@ -155,8 +155,11 @@ describe("when creating an ast", () => {
             Chicken
             1 whole chicken
             Steps
+            Sauce
             1. first step
             2. second step
+            Chicken
+            3) third step
             `
         const {recipe, errors} = toRecipe(input, true)
         expect(recipe).toEqual({
