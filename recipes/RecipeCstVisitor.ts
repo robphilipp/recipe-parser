@@ -63,7 +63,11 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
     // whether only the first ingredient will have the current section property set
     readonly deDupSections
 
-    // todo add method for "sections", "steps", etc
+    /**
+     * The entry method for converting the entire recipe text into an object
+     * @param context The context holding the parts of the recipe
+     * @return The recipe object or a fragment of the recipe object
+     */
     sections(context: SectionsContext): RecipeAst {
         const ingredients = context.ingredients?.flatMap(cstNode => this.visit(cstNode))
         const steps = context.steps?.flatMap(cstNode => this.visit(cstNode))
@@ -77,21 +81,22 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
     /**
      * Entry point for the ingredients
      * @param context The ingredient context that holds the ingredients and sections
-     * @return The recipe object
+     * @return A list of ingredients
      */
     ingredients(context: IngredientsContext): Array<Ingredient> {
-    // ingredients(context: IngredientsContext): RecipeAst {
         // there are one or more ingredients, so we need to run through the list
         const ingredients = context.ingredientItem?.map(cstNode => this.visit(cstNode)) || []
         const sections = context.ingredientsSection?.flatMap(cstNode => this.visit(cstNode)) || []
-        // return {
-        //     type: 'ingredients',
-        //     ingredients: [...ingredients, ...sections]
-        // }
         return [...ingredients, ...sections]
     }
 
+    /**
+     * Entry point for the steps (instructions)
+     * @param context The steps context that holds the steps and sections
+     * @return A list of steps
+     */
     steps(context: StepsContext): Array<Step> {
+        // there are one or more steps, so we need to run through the list
         const steps = context.stepItem?.map(cstNode => this.visit(cstNode)) || []
         const sections = context.stepsSection?.flatMap(cstNode => this.visit(cstNode)) || []
         return [...steps, ...sections]
@@ -128,19 +133,7 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
         }
         return steps.map(step => ({...step, title: title.section, brand: null}))
     }
-    // section(context: SectionContext): Array<IngredientItemType> {
-    //     const section = context.SectionHeader[0].payload
-    //     const ingredients = context.ingredientItem.map(cstNode => this.visit(cstNode))
-    //     // when user only wants the first ingredient to have the section header set, then de-dup it true
-    //     if (this.deDupSections && ingredients.length > 0) {
-    //         const updated = ingredients.map(ingredient => ({...ingredient, section: null, brand: null}))
-    //         updated[0].section = section.header
-    //         return updated
-    //     }
-    //     return ingredients.map(ingredient => ({...ingredient, section: section.header, brand: null}))
-    // }
 
-    // noinspection JSUnusedGlobalSymbols
     /**
      * Called by the ingredient item visitor and the shamelessly ignored to pull out the ingredient-item's
      * list ID (i.e. 1. or 1) or * or -, etc).
@@ -199,9 +192,7 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
 // singleton recipe object that can be recreated with a different configuration
 let toAstVisitorInstance: RecipeCstVisitor
 
-export enum ParseType {
-    RECIPE, INGREDIENTS, STEPS
-}
+export enum ParseType {RECIPE, INGREDIENTS, STEPS}
 
 const StartRule = new Map<ParseType, RuleName>([
     [ParseType.RECIPE, RuleName.SECTIONS],
@@ -254,8 +245,9 @@ export function toRecipe(text: string, options: Options = defaultOptions): Recip
         }
         if (parserInstance === null) throw Error("Parser instance is null")
         parserInstance.input = lexingResult.tokens
+
+        // start parsing at the specified rule
         const cst = parserInstance[StartRule.get(type) || RuleName.SECTIONS]()
-        // const cst = parserInstance.sections()
 
         return {parserInstance, cst, lexingResult}
     }

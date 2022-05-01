@@ -82,6 +82,8 @@ export class RecipeParser extends CstParser {
         })
     })
 
+    // list of steps can either have a section header, or a step. if it has
+    // a section header, then under that section header, there could be more steps.
     steps = this.RULE(RuleName.STEPS, () => {
         this.AT_LEAST_ONE({
             DEF: () => {
@@ -131,6 +133,7 @@ export class RecipeParser extends CstParser {
         this.SUBRULE(this.ingredient)
     })
 
+    // a step, possibly as a number or bulleted list
     stepItem = this.RULE(RuleName.STEP_ITEM, () => {
         this.OPTION(() => {
             this.SUBRULE(this.listItemId)
@@ -157,6 +160,7 @@ export class RecipeParser extends CstParser {
         })
     })
 
+    // the step instructions
     step = this.RULE(RuleName.STEP, () => {
         this.AT_LEAST_ONE({
             DEF: () => this.CONSUME(Word)
