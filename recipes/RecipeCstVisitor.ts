@@ -10,10 +10,21 @@ type Amount = {
 
 type Ingredient = {
     id: string
+    // section title that allows ingredients to be organized into sections
     section: string | null
     name: string
     brand: string | null
     amount: Amount
+}
+
+/**
+ * A step in making the recipe
+ */
+export type Step = {
+    id: string
+    // section title that allows steps to be organized into sections
+    title: string | null
+    text: string
 }
 
 /**
@@ -52,19 +63,32 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
     // whether only the first ingredient will have the current section property set
     readonly deDupSections
 
+    // todo add method for "sections", "steps", etc
+    sections(context: SectionsContext): RecipeAst {
+        const ingredients = context.ingredients?.flatMap(cstNode => this.visit(cstNode))
+        const steps = context.steps?.flatMap(cstNode => this.visit(cstNode))
+        return {
+            type: 'recipe',
+            ingredients,
+            steps
+        }
+    }
+
     /**
      * Entry point for the ingredients
      * @param context The ingredient context that holds the ingredients and sections
      * @return The recipe object
      */
-    ingredients(context: IngredientsContext): RecipeAst {
+    ingredients(context: IngredientsContext): Array<Ingredient> {
+    // ingredients(context: IngredientsContext): RecipeAst {
         // there are one or more ingredients, so we need to run through the list
         const ingredients = context.ingredientItem?.map(cstNode => this.visit(cstNode)) || []
         const sections = context.section?.flatMap(cstNode => this.visit(cstNode)) || []
-        return {
-            type: 'ingredients',
-            ingredients: [...ingredients, ...sections]
-        }
+        // return {
+        //     type: 'ingredients',
+        //     ingredients: [...ingredients, ...sections]
+        // }
+        return [...ingredients, ...sections]
     }
 
     /**
@@ -164,7 +188,8 @@ export function toRecipe(
         }
         if (parserInstance === null) throw Error("Parser instance is null")
         parserInstance.input = lexingResult.tokens
-        const cst = parserInstance.ingredients()
+        const cst = parserInstance.sections()
+        // const cst = parserInstance.ingredients()
 
         return {parserInstance, cst, lexingResult}
     }
@@ -180,6 +205,11 @@ export function toRecipe(
 /*
  | SUPPORTING TYPES
  */
+type SectionsContext = CstChildrenDictionary & {
+    ingredients: Array<CstNode>
+    steps: Array<CstNode>
+}
+
 type IngredientsContext = CstChildrenDictionary & {
     ingredientItem: Array<CstNode>
     section: Array<CstNode>
@@ -214,6 +244,7 @@ type IngredientContext = CstChildrenDictionary & {
 type RecipeAst = {
     type: string
     ingredients: Array<Ingredient>
+    steps: Array<Step>
 }
 
 type IngredientItemType = {

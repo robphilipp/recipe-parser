@@ -104,6 +104,24 @@ const SectionHeader = createToken({
     line_breaks: false
 })
 
+/*
+ | SECTIONS
+ */
+const IngredientsSectionHeader = createToken({
+    name: "IngredientsSectionHeader",
+    pattern: matchIngredientsSection,
+    line_breaks: false,
+    longer_alt: SectionHeader
+})
+
+const StepsSectionHeader = createToken({
+    name: "StepsSectionHeader",
+    pattern: matchStepsSection,
+    line_breaks: false,
+    longer_alt: SectionHeader
+})
+
+
 /**
  * Holds the tokens used to parse the recipe. **Note** that the *order* in which these appear *matters*.
  */
@@ -115,6 +133,7 @@ export const multiModeLexerDefinition = {
             ListItemId,
             Amount, Quantity, WholeFraction, UnicodeFraction, Fraction, Decimal, Integer,
             Unit,
+            IngredientsSectionHeader,
             SectionHeader,
             Word,
         ],
@@ -122,6 +141,7 @@ export const multiModeLexerDefinition = {
             NewLine,
             WhiteSpace,
             ListItemId,
+            StepsSectionHeader,
             SectionHeader,
             Word
         ]

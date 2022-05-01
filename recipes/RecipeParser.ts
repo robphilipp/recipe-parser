@@ -2,7 +2,7 @@ import {CstNode, CstParser, ILexingResult} from "chevrotain";
 import {lex, multiModeLexerDefinition, recipeTokenVocabulary} from "./lexer/RecipeLexer";
 import {INGREDIENTS_HEADER, STEPS_HEADER} from "./lexer/matchers";
 
-const {ListItemId, Amount, Word, SectionHeader} = recipeTokenVocabulary
+const {ListItemId, Amount, Word, SectionHeader, IngredientsSectionHeader, StepsSectionHeader} = recipeTokenVocabulary
 
 /**
  * Constructs a concrete syntax tree that holds the [ingredients] element as root. The [ingredients]
@@ -27,18 +27,16 @@ export class RecipeParser extends CstParser {
             DEF: () => {
                 this.OR([
                     {
-                        GATE: () => this.LA(1).tokenType === SectionHeader &&
-                            this.LA(1).payload.header === INGREDIENTS_HEADER,
+                        GATE: () => this.LA(1).tokenType === IngredientsSectionHeader,
                         ALT: () => {
-                            this.CONSUME(SectionHeader)
+                            this.CONSUME(IngredientsSectionHeader)
                             this.SUBRULE(this.ingredients)
-                            // this.SUBRULE(this.ingredientsSection)
                         }
                     },
                     {
-                        GATE: () => this.LA(1).tokenType === SectionHeader &&
-                            this.LA(1).payload.header === STEPS_HEADER,
+                        GATE: () => this.LA(1).tokenType === StepsSectionHeader,
                         ALT: () => {
+                            // this.CONSUME(StepsSectionHeader)
                             // this.SUBRULE(this.steps)
                         }
                     }

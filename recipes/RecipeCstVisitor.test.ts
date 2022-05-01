@@ -154,10 +154,13 @@ describe("when creating an ast", () => {
             1/4 cup red wine vinegar
             Chicken
             1 whole chicken
+            Steps
+            1. first step
+            2. second step
             `
         const {recipe, errors} = toRecipe(input, true)
         expect(recipe).toEqual({
-            type: "ingredients",
+            type: "recipe",
             ingredients: [
                 {amount: {quantity: 2, unit: UnitType.TABLESPOON}, ingredient: 'sugar', section: 'Powder', brand: null},
                 {amount: {quantity: 1, unit: UnitType.TABLESPOON}, ingredient: 'paprika', section: null, brand: null},
