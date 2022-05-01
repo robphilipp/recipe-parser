@@ -1,4 +1,4 @@
-import {RecipeParser, RecipeParseResult, RuleName} from "./RecipeParser";
+import {ParseType, RecipeParser, RecipeParseResult, RuleName, StartRule} from "./RecipeParser";
 import {UnitType} from "./lexer/Units";
 import {CstChildrenDictionary, CstNode, ILexingError, IToken} from "chevrotain";
 import {lex} from "./lexer/RecipeLexer";
@@ -102,12 +102,11 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
         return [...steps, ...sections]
     }
 
-    // todo....need to find a way to distinguish between ingredients section and steps section
     /**
-     * Visited for the section nodes. A section has a header and a list of ingredients, which are
+     * Visited for the ingredients nodes. A section has a header and a list of ingredients, which are
      * visited from here.
-     * @param context The section context that holds the sections and the list of ingredients that
-     * belong to that section.
+     * @param context The ingredients section context that holds the sections and the list of
+     * ingredients that belong to that section.
      * @return An array of ingredient items (list id, amount, ingredient, section, brand)
      */
     ingredientsSection(context: IngredientsSectionContext): Array<IngredientItemType> {
@@ -122,6 +121,11 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
         return ingredients.map(ingredient => ({...ingredient, section: section.header, brand: null}))
     }
 
+    /**
+     * Visited for steps nodes. A section has a header and list of steps, which are visited from here.
+     * @param context The steps section context that holds the steps and steps section.
+     * @return An array of steps items (list id, step)
+     */
     stepsSection(context: StepsSectionContext): Array<StepItemType> {
         const title = context.SectionHeader[0].payload
         const steps = context.stepItem.map(cstNode => this.visit(cstNode))
@@ -158,6 +162,11 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
         }
     }
 
+    /**
+     * Visited for step-items
+     * @param context The step item context that holds the step ID and the step (instructions)
+     * @return The step item
+     */
     stepItem(context: StepItemContext): StepItemType {
         const listItemId = this.visit(context.listItemId)
         const step = this.visit(context.step)
@@ -184,6 +193,11 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
         return context.Word.map(i => i.image).join(" ")
     }
 
+    /**
+     * Visited by the step item for the step (instructions a as list of words).
+     * @param context The context holding the list of words representing the step
+     * @return The string of the concatenated words representing the strp
+     */
     step(context: StepContext): string {
         return context.Word.map(i => i.image).join(" ")
     }
@@ -191,14 +205,6 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
 
 // singleton recipe object that can be recreated with a different configuration
 let toAstVisitorInstance: RecipeCstVisitor
-
-export enum ParseType {RECIPE, INGREDIENTS, STEPS}
-
-const StartRule = new Map<ParseType, RuleName>([
-    [ParseType.RECIPE, RuleName.SECTIONS],
-    [ParseType.INGREDIENTS, RuleName.INGREDIENTS],
-    [ParseType.STEPS, RuleName.STEPS]
-])
 
 export type Options = {
     // When set to `true` only sets the section of the first ingredient of each
@@ -210,17 +216,18 @@ export type Options = {
     logWarnings?: boolean
     // The thing that the input text represents: a whole recipe, a list of ingredients,
     // or a list of steps.
-    type?: ParseType
+    inputType?: ParseType
 }
 
 export const defaultOptions: Options = {
     deDupSections: false,
     logWarnings: false,
-    type: ParseType.RECIPE
+    inputType: ParseType.RECIPE
 }
 
 /**
- * Converts the text to a list of recipe ingredients with optional sections.
+ * Converts the text to a list of recipe ingredients with optional sections. This is the
+ * function to call to convert a test recipe into a recipe object.
  * @param text The text to convert into a recipe object
  * @param [options = defaultOptions] The options used for parsing the text into a
  * recipe or recipe fragment.
@@ -230,7 +237,7 @@ export function toRecipe(text: string, options: Options = defaultOptions): Recip
     const {
         deDupSections = false,
         logWarnings = false,
-        type = ParseType.RECIPE
+        inputType = ParseType.RECIPE
     } = options
 
     if (toAstVisitorInstance === undefined || toAstVisitorInstance.deDupSections !== deDupSections) {
@@ -247,7 +254,7 @@ export function toRecipe(text: string, options: Options = defaultOptions): Recip
         parserInstance.input = lexingResult.tokens
 
         // start parsing at the specified rule
-        const cst = parserInstance[StartRule.get(type) || RuleName.SECTIONS]()
+        const cst = parserInstance[StartRule.get(inputType) || RuleName.SECTIONS]()
 
         return {parserInstance, cst, lexingResult}
     }

@@ -176,7 +176,19 @@ export type RecipeParseResult = {
     lexingResult: ILexingResult
 }
 
-export function parse(input: string): RecipeParseResult {
+export enum ParseType {
+    RECIPE,
+    INGREDIENTS,
+    STEPS
+}
+
+export const StartRule = new Map<ParseType, RuleName>([
+    [ParseType.RECIPE, RuleName.SECTIONS],
+    [ParseType.INGREDIENTS, RuleName.INGREDIENTS],
+    [ParseType.STEPS, RuleName.STEPS]
+])
+
+export function parse(input: string, inputType: ParseType = ParseType.RECIPE): RecipeParseResult {
     if (parserInstance === undefined) {
         parserInstance = new RecipeParser()
     } else {
@@ -187,8 +199,8 @@ export function parse(input: string): RecipeParseResult {
 
     parserInstance.input = lexingResult.tokens
 
-    // const cst = parserInstance["sections"]()
-    const cst = parserInstance.sections()
+    const cst = parserInstance[StartRule.get(inputType) || RuleName.SECTIONS]()
+    // const cst = parserInstance.sections()
 
     return {parserInstance, cst, lexingResult}
 }

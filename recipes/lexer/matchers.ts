@@ -341,7 +341,7 @@ export function isLeadingValid(text: string, startOffset: number): boolean {
 }
 
 /*
- | sections
+ | recipe parts (sections)
  */
 
 const inflector = new Natural.NounInflector()
@@ -351,6 +351,12 @@ const ingredientSynonyms = ['ingredient list', 'ingredient']
 
 export const INGREDIENTS_HEADER = "ingredients"
 
+/**
+ * Attempts to match an ingredients' section header
+ * @param text The text
+ * @param startOffset The current location in the text
+ * @return The pattern match result if found, or null otherwise
+ */
 export function matchIngredientsSection(text: string, startOffset: number): CustomPatternMatcherReturn | null {
     const result = matchSection(text, startOffset)
     if (result !== null && ingredientSynonyms.indexOf(result.payload.header.toLowerCase()) >= 0) {
@@ -366,6 +372,12 @@ const stepsSynonyms = ['step', 'method', 'process', 'instruction']
 
 export const STEPS_HEADER = "steps"
 
+/**
+ * Attempts to match a steps' section header
+ * @param text The text
+ * @param startOffset The current location in the text
+ * @return The pattern match result if found, or null otherwise
+ */
 export function matchStepsSection(text: string, startOffset: number): CustomPatternMatcherReturn | null {
     const result = matchSection(text, startOffset)
     if (result !== null && stepsSynonyms.indexOf(result.payload.header.toLowerCase()) >= 0) {

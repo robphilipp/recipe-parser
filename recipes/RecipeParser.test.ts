@@ -1,13 +1,10 @@
-import {parse} from "./RecipeParser";
-import {CstElement, CstNode, IToken} from "chevrotain";
+import {parse, ParseType} from "./RecipeParser";
+import {CstNode, IToken} from "chevrotain";
 import {INGREDIENTS_HEADER, STEPS_HEADER} from "./lexer/matchers";
 
 describe("when parsing a recipe", () => {
     it("should work", () => {
-        const {parserInstance, cst} = parse("1 1/2 cp all purpose flour")
-        // expect(result.tokens.map(token => token.image)).toEqual(["1 1/2 cp", "all", "purpose", "flour"])
-        // // the payload holds the actual unit calculated from the text
-        // expect(result.tokens[0].payload).toEqual({quantity: [3, 2], unit: 'cup'})
+        const {parserInstance, cst} = parse("1 1/2 cp all purpose flour", ParseType.INGREDIENTS)
 
         expect(true).toBeTruthy()
         expect(cst).toBeDefined()
@@ -47,7 +44,10 @@ describe("when parsing a recipe", () => {
     })
 
     it("should work for multiple items", () => {
-        const {parserInstance, cst} = parse(`1 1/2 cp all-purpose flour\n1 tsp vanilla extract`)
+        const {parserInstance, cst} = parse(
+            `1 1/2 cp all-purpose flour\n1 tsp vanilla extract`,
+            ParseType.INGREDIENTS
+        )
 
         expect(true).toBeTruthy()
         expect(cst).toBeDefined()
@@ -57,10 +57,10 @@ describe("when parsing a recipe", () => {
         expect(cst.children.ingredientItem).toHaveLength(2)
     })
     it("should work for multiple items and sections", () => {
-        const {
-            parserInstance,
-            cst
-        } = parse(`1 lb sugar#dough\n1 1/2 cp all-purpose flour\n1 tsp vanilla extract#sauce#\n1 cup milk`)
+        const {parserInstance, cst} = parse(
+            `1 lb sugar#dough\n1 1/2 cp all-purpose flour\n1 tsp vanilla extract#sauce#\n1 cup milk`,
+            ParseType.INGREDIENTS
+        )
 
         expect(cst.name).toBe('ingredients')
         expect(cst.children).toBeDefined()
@@ -72,11 +72,11 @@ describe("when parsing a recipe", () => {
         expect(ingredientItemNode.name).toBe("ingredientItem")
         expect(ingredientItemNode.children.amount).toHaveLength(1)
         expect(ingredientItemNode.children.ingredient).toHaveLength(1)
-        expect(cst.children.section).toHaveLength(2)
+        expect(cst.children.ingredientsSection).toHaveLength(2)
 
         /* DOUGH SECTION */
-        const dough = cst.children.section[0] as CstNode
-        expect(dough.name).toBe("section")
+        const dough = cst.children.ingredientsSection[0] as CstNode
+        expect(dough.name).toBe("ingredientsSection")
         expect(dough.children.SectionHeader).toHaveLength(1)
         expect(dough.children.ingredientItem).toHaveLength(2)
 
@@ -123,8 +123,8 @@ describe("when parsing a recipe", () => {
         expect(vanillaIngredientTokens.map(tkn => tkn.image)).toEqual(["vanilla", "extract"])
 
         /* SAUCE SECTION */
-        const sauce = cst.children.section[1] as CstNode
-        expect(sauce.name).toBe("section")
+        const sauce = cst.children.ingredientsSection[1] as CstNode
+        expect(sauce.name).toBe("ingredientsSection")
         expect(sauce.children.SectionHeader).toHaveLength(1)
         expect(sauce.children.ingredientItem).toHaveLength(1)
 
@@ -159,8 +159,7 @@ dough me
 1 1/2 cp all-purpose flour
 1 tsp vanilla extract
 sauce
-1 cup milk`
-        )
+1 cup milk`, ParseType.INGREDIENTS)
 
         expect(cst.name).toBe('ingredients')
         expect(cst.children).toBeDefined()
@@ -172,11 +171,11 @@ sauce
         expect(ingredientItemNode.name).toBe("ingredientItem")
         expect(ingredientItemNode.children.amount).toHaveLength(1)
         expect(ingredientItemNode.children.ingredient).toHaveLength(1)
-        expect(cst.children.section).toHaveLength(2)
+        expect(cst.children.ingredientsSection).toHaveLength(2)
 
         /* DOUGH SECTION */
-        const dough = cst.children.section[0] as CstNode
-        expect(dough.name).toBe("section")
+        const dough = cst.children.ingredientsSection[0] as CstNode
+        expect(dough.name).toBe("ingredientsSection")
         expect(dough.children.SectionHeader).toHaveLength(1)
         expect(dough.children.ingredientItem).toHaveLength(2)
 
@@ -223,8 +222,8 @@ sauce
         expect(vanillaIngredientTokens.map(tkn => tkn.image)).toEqual(["vanilla", "extract"])
 
         /* SAUCE SECTION */
-        const sauce = cst.children.section[1] as CstNode
-        expect(sauce.name).toBe("section")
+        const sauce = cst.children.ingredientsSection[1] as CstNode
+        expect(sauce.name).toBe("ingredientsSection")
         expect(sauce.children.SectionHeader).toHaveLength(1)
         expect(sauce.children.ingredientItem).toHaveLength(1)
 

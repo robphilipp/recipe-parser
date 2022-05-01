@@ -1,33 +1,15 @@
-import {createToken, ILexingResult, Lexer, TokenType, TokenVocabulary} from 'chevrotain'
+import {createToken, ILexingResult, Lexer, TokenType} from 'chevrotain'
 import {regexParts} from "./RegExpParts";
 import {
-    amountMatcher, matchIngredientsSection,
+    amountMatcher,
     matchFraction,
+    matchIngredientsSection,
     matchQuantity,
-    matchUnicodeFraction,
     matchSection,
-    unitMatcher, matchStepsSection
+    matchStepsSection,
+    matchUnicodeFraction,
+    unitMatcher
 } from "./matchers";
-
-/*
- | LEXER MODES (enter, exit)
- */
-const INGREDIENTS_MODE = "ingredients_mode"
-const STEPS_MODE = "steps_mode"
-
-const EnterIngredients = createToken({
-    name: "EnterIngredients",
-    pattern: matchIngredientsSection,
-    line_breaks: false,
-    push_mode: INGREDIENTS_MODE
-})
-
-const EnterSteps = createToken({
-    name: "EnterSteps",
-    pattern: matchStepsSection,
-    line_breaks: false,
-    push_mode: STEPS_MODE
-})
 
 /*
  | NUMBERS
@@ -121,36 +103,6 @@ const StepsSectionHeader = createToken({
     longer_alt: SectionHeader
 })
 
-
-// /**
-//  * Holds the tokens used to parse the recipe. **Note** that the *order* in which these appear *matters*.
-//  */
-// export const multiModeLexerDefinition = {
-//     modes: {
-//         [INGREDIENTS_MODE]: [
-//             NewLine,
-//             WhiteSpace,
-//             ListItemId,
-//             Amount, Quantity, WholeFraction, UnicodeFraction, Fraction, Decimal, Integer,
-//             Unit,
-//             IngredientsSectionHeader,
-//             StepsSectionHeader,
-//             SectionHeader,
-//             Word,
-//         ],
-//         [STEPS_MODE]: [
-//             NewLine,
-//             WhiteSpace,
-//             ListItemId,
-//             // EnterIngredients,
-//             // EnterSteps,
-//             StepsSectionHeader,
-//             SectionHeader,
-//             Word
-//         ]
-//     },
-//     defaultMode: INGREDIENTS_MODE
-// }
 /**
  * Holds the tokens used to parse the recipe. **Note** that the *order* in which these appear *matters*.
  */
@@ -166,21 +118,11 @@ export const recipeTokens = [
     Word,
 ]
 
-// export const recipeTokenVocabulary = Object
-//     .values(multiModeLexerDefinition.modes)
-//     .flatMap(values => values)
-//     .reduce((vocab, token) => {
-//         vocab[token.name] = token
-//         return vocab
-//     }, {} as { [key: string]: TokenType })
 export const recipeTokenVocabulary = recipeTokens.reduce((vocab, token) => {
     vocab[token.name] = token
     return vocab
 }, {} as { [key: string]: TokenType })
 
-
-// todo see multi-mode lexing https://github.com/Chevrotain/chevrotain/blob/master/examples/lexer/multi_mode_lexer/multi_mode_lexer.js
-//      so that each section have a mode
 
 let recipeLexer: Lexer
 
