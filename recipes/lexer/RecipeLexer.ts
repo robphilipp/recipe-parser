@@ -122,56 +122,61 @@ const StepsSectionHeader = createToken({
 })
 
 
-/**
- * Holds the tokens used to parse the recipe. **Note** that the *order* in which these appear *matters*.
- */
-export const multiModeLexerDefinition = {
-    modes: {
-        [INGREDIENTS_MODE]: [
-            NewLine,
-            WhiteSpace,
-            ListItemId,
-            Amount, Quantity, WholeFraction, UnicodeFraction, Fraction, Decimal, Integer,
-            Unit,
-            IngredientsSectionHeader,
-            SectionHeader,
-            Word,
-        ],
-        [STEPS_MODE]: [
-            NewLine,
-            WhiteSpace,
-            ListItemId,
-            StepsSectionHeader,
-            SectionHeader,
-            Word
-        ]
-    },
-    defaultMode: INGREDIENTS_MODE
-}
 // /**
 //  * Holds the tokens used to parse the recipe. **Note** that the *order* in which these appear *matters*.
 //  */
-// export const recipeTokens = [
-//     NewLine,
-//     WhiteSpace,
-//     ListItemId,
-//     Amount, Quantity, WholeFraction, UnicodeFraction, Fraction, Decimal, Integer,
-//     Unit,
-//     SectionHeader,
-//     Word,
-// ]
+// export const multiModeLexerDefinition = {
+//     modes: {
+//         [INGREDIENTS_MODE]: [
+//             NewLine,
+//             WhiteSpace,
+//             ListItemId,
+//             Amount, Quantity, WholeFraction, UnicodeFraction, Fraction, Decimal, Integer,
+//             Unit,
+//             IngredientsSectionHeader,
+//             StepsSectionHeader,
+//             SectionHeader,
+//             Word,
+//         ],
+//         [STEPS_MODE]: [
+//             NewLine,
+//             WhiteSpace,
+//             ListItemId,
+//             // EnterIngredients,
+//             // EnterSteps,
+//             StepsSectionHeader,
+//             SectionHeader,
+//             Word
+//         ]
+//     },
+//     defaultMode: INGREDIENTS_MODE
+// }
+/**
+ * Holds the tokens used to parse the recipe. **Note** that the *order* in which these appear *matters*.
+ */
+export const recipeTokens = [
+    NewLine,
+    WhiteSpace,
+    ListItemId,
+    Amount, Quantity, WholeFraction, UnicodeFraction, Fraction, Decimal, Integer,
+    Unit,
+    IngredientsSectionHeader,
+    StepsSectionHeader,
+    SectionHeader,
+    Word,
+]
 
-export const recipeTokenVocabulary = Object
-    .values(multiModeLexerDefinition.modes)
-    .flatMap(values => values)
-    .reduce((vocab, token) => {
-        vocab[token.name] = token
-        return vocab
-    }, {} as { [key: string]: TokenType })
-// export const recipeTokenVocabulary: TokenVocabulary = recipeTokens.reduce((vocab, token) => {
-//     vocab[token.name] = token
-//     return vocab
-// }, {} as { [key: string]: TokenType })
+// export const recipeTokenVocabulary = Object
+//     .values(multiModeLexerDefinition.modes)
+//     .flatMap(values => values)
+//     .reduce((vocab, token) => {
+//         vocab[token.name] = token
+//         return vocab
+//     }, {} as { [key: string]: TokenType })
+export const recipeTokenVocabulary = recipeTokens.reduce((vocab, token) => {
+    vocab[token.name] = token
+    return vocab
+}, {} as { [key: string]: TokenType })
 
 
 // todo see multi-mode lexing https://github.com/Chevrotain/chevrotain/blob/master/examples/lexer/multi_mode_lexer/multi_mode_lexer.js
@@ -188,8 +193,8 @@ let recipeLexer: Lexer
  */
 export function lex(input: string, logWarnings: boolean = false): ILexingResult {
     if (recipeLexer === undefined) {
-        recipeLexer = new Lexer(multiModeLexerDefinition)
-        // recipeLexer = new Lexer(recipeTokens)
+        // recipeLexer = new Lexer(multiModeLexerDefinition)
+        recipeLexer = new Lexer(recipeTokens)
     }
     const result = recipeLexer.tokenize(input)
 

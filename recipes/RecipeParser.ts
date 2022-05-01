@@ -1,6 +1,5 @@
 import {CstNode, CstParser, ILexingResult} from "chevrotain";
-import {lex, multiModeLexerDefinition, recipeTokenVocabulary} from "./lexer/RecipeLexer";
-import {INGREDIENTS_HEADER, STEPS_HEADER} from "./lexer/matchers";
+import {lex, recipeTokenVocabulary} from "./lexer/RecipeLexer";
 
 const {ListItemId, Amount, Word, SectionHeader, IngredientsSectionHeader, StepsSectionHeader} = recipeTokenVocabulary
 
@@ -13,8 +12,8 @@ const {ListItemId, Amount, Word, SectionHeader, IngredientsSectionHeader, StepsS
  */
 export class RecipeParser extends CstParser {
     constructor() {
-        super(multiModeLexerDefinition);
-        // super(recipeTokenVocabulary);
+        // super(multiModeLexerDefinition);
+        super(recipeTokenVocabulary);
 
         this.performSelfAnalysis()
     }
@@ -36,8 +35,8 @@ export class RecipeParser extends CstParser {
                     {
                         GATE: () => this.LA(1).tokenType === StepsSectionHeader,
                         ALT: () => {
-                            // this.CONSUME(StepsSectionHeader)
-                            // this.SUBRULE(this.steps)
+                            this.CONSUME(StepsSectionHeader)
+                            this.SUBRULE(this.steps)
                         }
                     }
                 ])
@@ -55,11 +54,29 @@ export class RecipeParser extends CstParser {
             DEF: () => {
                 this.OR([
                     {
-                        GATE: () => this.LA(1).tokenType === SectionHeader, ALT: () => {
-                            this.SUBRULE(this.section)
-                        }
+                        GATE: () => this.LA(1).tokenType === SectionHeader,
+                        ALT: () => this.SUBRULE(this.ingredientsSection)
+
                     },
-                    {ALT: () => this.SUBRULE(this.ingredientItem)}
+                    {
+                        ALT: () => this.SUBRULE(this.ingredientItem)
+                    }
+                ])
+            }
+        })
+    })
+
+    steps = this.RULE("steps", () => {
+        this.AT_LEAST_ONE({
+            DEF: () => {
+                this.OR([
+                    {
+                        GATE: () => this.LA(1).tokenType === StepsSectionHeader,
+                        ALT: () => this.SUBRULE(this.stepsSection)
+                    },
+                    {
+                        ALT: () => this.SUBRULE(this.stepItem)
+                    }
                 ])
             }
         })
@@ -68,7 +85,7 @@ export class RecipeParser extends CstParser {
     // a section in the ingredient list. for example, the ingredients to make a dough, or a sauce.
     // want the section to be the parent node to the ingredients that follow, until a new section
     // header is encountered.
-    section = this.RULE("section", () => {
+    ingredientsSection = this.RULE("ingredientsSection", () => {
         this.CONSUME(SectionHeader)
         this.AT_LEAST_ONE({
             DEF: () => {
@@ -76,6 +93,25 @@ export class RecipeParser extends CstParser {
             }
         })
     })
+    stepsSection = this.RULE("stepsSection", () => {
+        this.CONSUME(SectionHeader)
+        this.AT_LEAST_ONE({
+            DEF: () => {
+                this.SUBRULE(this.stepItem)
+            }
+        })
+    })
+    // // a section in the ingredient list. for example, the ingredients to make a dough, or a sauce.
+    // // want the section to be the parent node to the ingredients that follow, until a new section
+    // // header is encountered.
+    // section = this.RULE("section", () => {
+    //     this.CONSUME(SectionHeader)
+    //     this.AT_LEAST_ONE({
+    //         DEF: () => {
+    //             this.SUBRULE(this.ingredientItem)
+    //         }
+    //     })
+    // })
 
     // an ingredient, possibly as a numbered or bulleted list
     ingredientItem = this.RULE("ingredientItem", () => {
@@ -84,6 +120,13 @@ export class RecipeParser extends CstParser {
         })
         this.SUBRULE(this.amount)
         this.SUBRULE(this.ingredient)
+    })
+
+    stepItem = this.RULE("stepItem", () => {
+        this.OPTION(() => {
+            this.SUBRULE(this.listItemId)
+        })
+        this.SUBRULE(this.step)
     })
 
     // the number or bullet of the list
@@ -102,6 +145,12 @@ export class RecipeParser extends CstParser {
             DEF: () => {
                 this.CONSUME(Word)
             }
+        })
+    })
+
+    step = this.RULE("step", () => {
+        this.AT_LEAST_ONE({
+            DEF: () => this.CONSUME(Word)
         })
     })
 }

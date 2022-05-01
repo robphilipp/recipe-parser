@@ -91,6 +91,13 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
         return [...ingredients, ...sections]
     }
 
+    steps(context: StepsContext): Array<Step> {
+        const steps = context.stepItem?.map(cstNode => this.visit(cstNode)) || []
+        const sections = context.section?.flatMap(cstNode => this.visit(cstNode)) || []
+        return [...steps, ...sections]
+    }
+
+    // todo....need to find a way to distinguish between ingredients section and steps section
     /**
      * Visited for the section nodes. A section has a header and a list of ingredients, which are
      * visited from here.
@@ -98,7 +105,7 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
      * belong to that section.
      * @return An array of ingredient items (list id, amount, ingredient, section, brand)
      */
-    section(context: SectionContext): Array<IngredientItemType> {
+    ingredientsSection(context: IngredientsSectionContext): Array<IngredientItemType> {
         const section = context.SectionHeader[0].payload
         const ingredients = context.ingredientItem.map(cstNode => this.visit(cstNode))
         // when user only wants the first ingredient to have the section header set, then de-dup it true
@@ -109,6 +116,29 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
         }
         return ingredients.map(ingredient => ({...ingredient, section: section.header, brand: null}))
     }
+
+    stepsSection(context: StepsSectionContext): Array<StepItemType> {
+        const title = context.SectionHeader[0].payload
+        const steps = context.stepItem.map(cstNode => this.visit(cstNode))
+        // when user only wants the first step to have the section header set, then de-dup it true
+        if (this.deDupSections && steps.length > 0) {
+            const updated = steps.map(step => ({...step, title: null}))
+            updated[0].title = title.header
+            return updated
+        }
+        return steps.map(step => ({...step, title: title.section, brand: null}))
+    }
+    // section(context: SectionContext): Array<IngredientItemType> {
+    //     const section = context.SectionHeader[0].payload
+    //     const ingredients = context.ingredientItem.map(cstNode => this.visit(cstNode))
+    //     // when user only wants the first ingredient to have the section header set, then de-dup it true
+    //     if (this.deDupSections && ingredients.length > 0) {
+    //         const updated = ingredients.map(ingredient => ({...ingredient, section: null, brand: null}))
+    //         updated[0].section = section.header
+    //         return updated
+    //     }
+    //     return ingredients.map(ingredient => ({...ingredient, section: section.header, brand: null}))
+    // }
 
     // noinspection JSUnusedGlobalSymbols
     /**
@@ -138,6 +168,11 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
         }
     }
 
+    stepItem(context: StepItemContext): StepItemType {
+        const {stepItemId, step} = this.visit(context.step)
+        return {id: stepItemId, step, title: null}
+    }
+
     /**
      * Visited by the ingredient item for the amount, which is the quantity and unit
      * @param context The context holding the quantity and the unit
@@ -155,6 +190,10 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
      * @return The string of the concatenated words representing the ingredient
      */
     ingredient(context: IngredientContext): string {
+        return context.Word.map(i => i.image).join(" ")
+    }
+
+    step(context: StepContext): string {
         return context.Word.map(i => i.image).join(" ")
     }
 }
@@ -215,13 +254,23 @@ type IngredientsContext = CstChildrenDictionary & {
     section: Array<CstNode>
 }
 
+type StepsContext = CstChildrenDictionary & {
+    stepItem: Array<CstNode>
+    section: Array<CstNode>
+}
+
 type ListItemIdContext = CstChildrenDictionary & {
     listItemId: IToken
 }
 
-type SectionContext = CstChildrenDictionary & {
+type IngredientsSectionContext = CstChildrenDictionary & {
     SectionHeader: Array<IToken>
     ingredientItem: Array<CstNode>
+}
+
+type StepsSectionContext = CstChildrenDictionary & {
+    SectionHeader: Array<IToken>
+    stepItem: Array<CstNode>
 }
 
 type IngredientItemContext = CstChildrenDictionary & {
@@ -230,11 +279,20 @@ type IngredientItemContext = CstChildrenDictionary & {
     ingredient: Array<CstNode>
 }
 
+type StepItemContext = CstChildrenDictionary & {
+    stepItemId: IToken
+    step: Array<CstNode>
+}
+
 type AmountContext = CstChildrenDictionary & {
     Amount: Array<IToken>
 }
 
 type IngredientContext = CstChildrenDictionary & {
+    Word: Array<IToken>
+}
+
+type StepContext = CstChildrenDictionary & {
     Word: Array<IToken>
 }
 
@@ -252,6 +310,12 @@ type IngredientItemType = {
     ingredient: string
     section: string | null
     brand: string | null
+}
+
+type StepItemType = {
+    id: string
+    title: string | null
+    step: string
 }
 
 type AmountType = {

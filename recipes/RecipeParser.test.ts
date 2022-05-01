@@ -1,5 +1,6 @@
 import {parse} from "./RecipeParser";
 import {CstElement, CstNode, IToken} from "chevrotain";
+import {INGREDIENTS_HEADER, STEPS_HEADER} from "./lexer/matchers";
 
 describe("when parsing a recipe", () => {
     it("should work", () => {
@@ -254,11 +255,14 @@ sauce
     it("should work for sections containing items", () => {
         // const {parserInstance, cst} = parse(`1 lb sugar\ndough me\n1 1/2 cp all-purpose flour\n1 tsp vanilla extract\nsauce\n1 cup milk\n`)
         const {parserInstance, cst} = parse(`ingredients
-        doughme
+        dough me
 1 1/2 cp all-purpose flour
 1 tsp vanilla extract
 sauce
-1 cup milk`
+1 cup milk
+steps
+1. first step
+2. second step`
         )
 //         const {parserInstance, cst} = parse(`dough me
 // 1 1/2 cp all-purpose flour
@@ -267,12 +271,32 @@ sauce
 // 1 cup milk`
 //         )
 
-        expect(cst.name).toBe('ingredients')
+        expect(cst.name).toBe('sections')
         expect(cst.children).toBeDefined()
 
+        /* PARTS */
+        expect(cst.children.IngredientsSectionHeader).toBeDefined()
+        expect((cst.children.IngredientsSectionHeader[0] as IToken).tokenType.name).toBe("IngredientsSectionHeader")
+        expect((cst.children.IngredientsSectionHeader[0] as IToken).payload.header).toBe(INGREDIENTS_HEADER)
+        expect(cst.children.ingredients).toBeDefined()
+        expect(cst.children.ingredients).toHaveLength(1)
+
+        expect(cst.children.StepsSectionHeader).toBeDefined()
+        expect((cst.children.StepsSectionHeader[0] as IToken).tokenType.name).toBe("StepsSectionHeader")
+        expect((cst.children.StepsSectionHeader[0] as IToken).payload.header).toBe(STEPS_HEADER)
+        expect(cst.children.steps).toBeDefined()
+        expect(cst.children.steps).toHaveLength(1)
+
+        /* INGREDIENTS PART */
+        const ingredientsNode = cst.children.ingredients[0] as CstNode
+        expect(ingredientsNode.name).toBe(INGREDIENTS_HEADER)
+        expect(ingredientsNode.children.ingredientsSection).toHaveLength(2)
+
+        const ingredientSections = ingredientsNode.children.ingredientsSection
+
         /* DOUGH SECTION */
-        const dough = cst.children.section[0] as CstNode
-        expect(dough.name).toBe("section")
+        const dough = ingredientSections[0] as CstNode
+        expect(dough.name).toBe("ingredientsSection")
         expect(dough.children.SectionHeader).toHaveLength(1)
         expect(dough.children.ingredientItem).toHaveLength(2)
 
@@ -319,8 +343,8 @@ sauce
         expect(vanillaIngredientTokens.map(tkn => tkn.image)).toEqual(["vanilla", "extract"])
 
         /* SAUCE SECTION */
-        const sauce = cst.children.section[1] as CstNode
-        expect(sauce.name).toBe("section")
+        const sauce = ingredientSections[1] as CstNode
+        expect(sauce.name).toBe("ingredientsSection")
         expect(sauce.children.SectionHeader).toHaveLength(1)
         expect(sauce.children.ingredientItem).toHaveLength(1)
 
@@ -346,6 +370,8 @@ sauce
         expect(milkIngredient.children.Word).toHaveLength(1)
         const milkIngredientTokens = milkIngredient.children.Word as Array<IToken>
         expect(milkIngredientTokens.map(tkn => tkn.image)).toEqual(["milk"])
+
+        /* STEPS PART */
 
     })
 })
