@@ -1,4 +1,4 @@
-import {RecipeParser, RecipeParseResult} from "./RecipeParser";
+import {RecipeParser, RecipeParseResult, RuleName} from "./RecipeParser";
 import {UnitType} from "./lexer/Units";
 import {CstChildrenDictionary, CstNode, ILexingError, IToken} from "chevrotain";
 import {lex} from "./lexer/RecipeLexer";
@@ -199,20 +199,49 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
 // singleton recipe object that can be recreated with a different configuration
 let toAstVisitorInstance: RecipeCstVisitor
 
+export enum ParseType {
+    RECIPE, INGREDIENTS, STEPS
+}
+
+const StartRule = new Map<ParseType, RuleName>([
+    [ParseType.RECIPE, RuleName.SECTIONS],
+    [ParseType.INGREDIENTS, RuleName.INGREDIENTS],
+    [ParseType.STEPS, RuleName.STEPS]
+])
+
+export type Options = {
+    // When set to `true` only sets the section of the first ingredient of each
+    // section to current section.
+    deDupSections?: boolean
+    // When set to `true` then logs warning to the console, otherwise
+    // does not log warnings. Warning and errors are reported in the returned object
+    // in either case.
+    logWarnings?: boolean
+    // The thing that the input text represents: a whole recipe, a list of ingredients,
+    // or a list of steps.
+    type?: ParseType
+}
+
+export const defaultOptions: Options = {
+    deDupSections: false,
+    logWarnings: false,
+    type: ParseType.RECIPE
+}
+
 /**
  * Converts the text to a list of recipe ingredients with optional sections.
  * @param text The text to convert into a recipe object
- * @param deDupSections When set to `true` only sets the section of the first ingredient of each
- * section to current section.
- * @param [logWarnings = false] When set to `true` then logs warning to the console, otherwise
- * does not log warnings. Warning and errors are reported in the returned object in either case.
+ * @param [options = defaultOptions] The options used for parsing the text into a
+ * recipe or recipe fragment.
  * @return A recipe result holding the recipe object and any parsing errors
  */
-export function toRecipe(
-    text: string,
-    deDupSections: boolean = false,
-    logWarnings: boolean = false
-): RecipeResult {
+export function toRecipe(text: string, options: Options = defaultOptions): RecipeResult {
+    const {
+        deDupSections = false,
+        logWarnings = false,
+        type = ParseType.RECIPE
+    } = options
+
     if (toAstVisitorInstance === undefined || toAstVisitorInstance.deDupSections !== deDupSections) {
         toAstVisitorInstance = new RecipeCstVisitor(deDupSections)
     }
@@ -225,8 +254,8 @@ export function toRecipe(
         }
         if (parserInstance === null) throw Error("Parser instance is null")
         parserInstance.input = lexingResult.tokens
-        const cst = parserInstance.sections()
-        // const cst = parserInstance.ingredients()
+        const cst = parserInstance[StartRule.get(type) || RuleName.SECTIONS]()
+        // const cst = parserInstance.sections()
 
         return {parserInstance, cst, lexingResult}
     }
@@ -258,14 +287,8 @@ type StepsContext = CstChildrenDictionary & {
 }
 
 type ListItemIdContext = CstChildrenDictionary & {
-    // listItemId: IToken
-    // ListItemId: Array<CstNode>
     ListItemId: Array<IToken>
 }
-
-// type ListItemIdTokenContext = CstChildrenDictionary & {
-//     ListItemId: Array<IToken>
-// }
 
 type IngredientsSectionContext = CstChildrenDictionary & {
     SectionHeader: Array<IToken>

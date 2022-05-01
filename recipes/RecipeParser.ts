@@ -3,6 +3,22 @@ import {lex, recipeTokenVocabulary} from "./lexer/RecipeLexer";
 
 const {ListItemId, Amount, Word, SectionHeader, IngredientsSectionHeader, StepsSectionHeader} = recipeTokenVocabulary
 
+export enum RuleName {
+    SECTIONS = "sections",
+
+    INGREDIENTS = "ingredients",
+    INGREDIENTS_SECTION = "ingredientsSection",
+    INGREDIENT_ITEM = "ingredientItem",
+    INGREDIENT = "ingredient",
+    AMOUNT = "amount",
+
+    STEPS = "steps",
+    STEPS_SECTION = "stepsSection",
+    STEP_ITEM = "stepItem",
+    STEP = "step",
+
+    LIST_ITEM_ID = "listItemId"
+}
 /**
  * Constructs a concrete syntax tree that holds the [ingredients] element as root. The [ingredients]
  * can have children of type [ingredient-items] or [section]. The [section] has [ingredient-item] as
@@ -21,7 +37,7 @@ export class RecipeParser extends CstParser {
     // list of sections (i.e. ingredients, steps, etc) that match the modes of the
     // lexer. these are the elements of a recipe (i.e. story, meta, ingredients,
     // steps, notes).
-    sections = this.RULE("sections", () => {
+    sections = this.RULE(RuleName.SECTIONS, () => {
         this.AT_LEAST_ONE({
             DEF: () => {
                 this.OR([
@@ -49,7 +65,7 @@ export class RecipeParser extends CstParser {
     //
     // list of ingredients can either have a section header, or an ingredient. if it has
     // a section header, then under that section header, there could be more ingredients
-    ingredients = this.RULE("ingredients", () => {
+    ingredients = this.RULE(RuleName.INGREDIENTS, () => {
         this.AT_LEAST_ONE({
             DEF: () => {
                 this.OR([
@@ -66,7 +82,7 @@ export class RecipeParser extends CstParser {
         })
     })
 
-    steps = this.RULE("steps", () => {
+    steps = this.RULE(RuleName.STEPS, () => {
         this.AT_LEAST_ONE({
             DEF: () => {
                 this.OR([
@@ -85,7 +101,7 @@ export class RecipeParser extends CstParser {
     // a section in the ingredient list. for example, the ingredients to make a dough, or a sauce.
     // want the section to be the parent node to the ingredients that follow, until a new section
     // header is encountered.
-    ingredientsSection = this.RULE("ingredientsSection", () => {
+    ingredientsSection = this.RULE(RuleName.INGREDIENTS_SECTION, () => {
         this.CONSUME(SectionHeader)
         this.AT_LEAST_ONE({
             DEF: () => {
@@ -93,7 +109,11 @@ export class RecipeParser extends CstParser {
             }
         })
     })
-    stepsSection = this.RULE("stepsSection", () => {
+
+    // a section in the steps list. for example, the steps to make a dough, or a sauce.
+    // want the section to be the parent node to the steps that follow, until a new section
+    // header is encountered.
+    stepsSection = this.RULE(RuleName.STEPS_SECTION, () => {
         this.CONSUME(SectionHeader)
         this.AT_LEAST_ONE({
             DEF: () => {
@@ -101,20 +121,9 @@ export class RecipeParser extends CstParser {
             }
         })
     })
-    // // a section in the ingredient list. for example, the ingredients to make a dough, or a sauce.
-    // // want the section to be the parent node to the ingredients that follow, until a new section
-    // // header is encountered.
-    // section = this.RULE("section", () => {
-    //     this.CONSUME(SectionHeader)
-    //     this.AT_LEAST_ONE({
-    //         DEF: () => {
-    //             this.SUBRULE(this.ingredientItem)
-    //         }
-    //     })
-    // })
 
     // an ingredient, possibly as a numbered or bulleted list
-    ingredientItem = this.RULE("ingredientItem", () => {
+    ingredientItem = this.RULE(RuleName.INGREDIENT_ITEM, () => {
         this.OPTION(() => {
             this.SUBRULE(this.listItemId)
         })
@@ -122,7 +131,7 @@ export class RecipeParser extends CstParser {
         this.SUBRULE(this.ingredient)
     })
 
-    stepItem = this.RULE("stepItem", () => {
+    stepItem = this.RULE(RuleName.STEP_ITEM, () => {
         this.OPTION(() => {
             this.SUBRULE(this.listItemId)
         })
@@ -130,17 +139,17 @@ export class RecipeParser extends CstParser {
     })
 
     // the number or bullet of the list
-    listItemId = this.RULE("listItemId", () => {
+    listItemId = this.RULE(RuleName.LIST_ITEM_ID, () => {
         this.CONSUME(ListItemId)
     })
 
     // the amount (e.g. 1 cup)
-    amount = this.RULE("amount", () => {
+    amount = this.RULE(RuleName.AMOUNT, () => {
         this.CONSUME(Amount)
     })
 
     // the ingredient (e.g. all-purpose flour)
-    ingredient = this.RULE("ingredient", () => {
+    ingredient = this.RULE(RuleName.INGREDIENT, () => {
         this.AT_LEAST_ONE({
             DEF: () => {
                 this.CONSUME(Word)
@@ -148,7 +157,7 @@ export class RecipeParser extends CstParser {
         })
     })
 
-    step = this.RULE("step", () => {
+    step = this.RULE(RuleName.STEP, () => {
         this.AT_LEAST_ONE({
             DEF: () => this.CONSUME(Word)
         })
@@ -174,8 +183,8 @@ export function parse(input: string): RecipeParseResult {
 
     parserInstance.input = lexingResult.tokens
 
+    // const cst = parserInstance["sections"]()
     const cst = parserInstance.sections()
-    // const cst = parserInstance.ingredients()
 
     return {parserInstance, cst, lexingResult}
 }

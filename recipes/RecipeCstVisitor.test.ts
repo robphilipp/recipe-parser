@@ -119,7 +119,7 @@ describe("when creating an ast", () => {
             1 cup milk
             1 egg`
 
-        const {recipe, errors} = toRecipe(input, true)
+        const {recipe, errors} = toRecipe(input, {deDupSections: true})
         expect(recipe).toEqual({
             type: "ingredients",
             ingredients: [
@@ -161,7 +161,7 @@ describe("when creating an ast", () => {
             Chicken
             3) third step
             `
-        const {recipe, errors} = toRecipe(input, true)
+        const {recipe, errors} = toRecipe(input, {deDupSections: true})
         expect(recipe).toEqual({
             type: "recipe",
             ingredients: [
@@ -178,6 +178,11 @@ describe("when creating an ast", () => {
                 {amount: {quantity: 0.25, unit: UnitType.CUP}, ingredient: 'red wine vinegar', section: null, brand: null},
 
                 {amount: {quantity: 1, unit: UnitType.PIECE}, ingredient: 'whole chicken', section: 'Chicken', brand: null},
+            ],
+            steps: [
+                {id: "1.", step: "first step", title: "Sauce"},
+                {id: "2.", step: "second step", title: null},
+                {id: "3)", step: "third step", title: "Chicken"},
             ]
         })
     })
