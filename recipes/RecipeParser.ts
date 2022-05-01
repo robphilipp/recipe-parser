@@ -71,7 +71,7 @@ export class RecipeParser extends CstParser {
             DEF: () => {
                 this.OR([
                     {
-                        GATE: () => this.LA(1).tokenType === StepsSectionHeader,
+                        GATE: () => this.LA(1).tokenType === SectionHeader,
                         ALT: () => this.SUBRULE(this.stepsSection)
                     },
                     {
