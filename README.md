@@ -7,7 +7,7 @@ In its current incarnation, lexes, parses, and converts, lists of ingredients an
 A shout-out to the awesome libraries the recipe parser relies on
 
 1. [Chevrotain](https://chevrotain.io/docs/) for lexing, parsing, and semantics.
-2. [natural](https://github.com/NaturalNode/natural) for pluralization and phonetics.
+2. [pluralize](https://github.com/plurals/pluralize) for pluralization.
 3. [XRegExp](https://github.com/slevithan/xregexp) for sanity using regular expressions.
 
 The following code will parse a list of ingredients into a JSON object
@@ -126,6 +126,22 @@ To use the recipe parser, add the library to your project
 ```shell
 npm install recipe-parser
 ```
+
+and install the peer dependencies
+
+```shell
+npm install chevrotain
+npm install pluralize
+npm instal xregexp
+```
+
+Version compatibility
+
+| package  | support versions | notes |
+| --------|-----------------:| -------|
+| chevrotain |       \>= 10.0.0 | 9.0.0 works but the changes the CST nodes to be possibly undefined (typescript) |
+| pluralize |        \>= 7.0.0 | Possibly works with lower versions (let me know) |
+| xregexp |        \>= 4.0.0 | Possibly works with lower versions (let me know) |
 
 Add an import to your module
 

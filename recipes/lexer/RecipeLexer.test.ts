@@ -51,13 +51,13 @@ describe("when using the recipe lexer for ingredients", () => {
         // the payload holds the actual unit calculated from the text
         expect(result.tokens[0].payload).toEqual({quantity: [5, 4], unit: 'cup'})
     })
-    it("should be able to tokenize an ingredient with phonetics for pint", () => {
-        const result = lex("1/2 pnt all purpose flour")
-        expect(result.tokens.map(token => token.image)).toEqual(["1/2 pnt", "all", "purpose", "flour"])
-        // the payload holds the actual unit calculated from the text, but in this case, pnt is matches
-        // the phonetic value for pound and pint, and because pound appears first, it calculates it as pound.
-        expect(result.tokens[0].payload).toEqual({quantity: [1, 2], unit: 'lb'})
-    })
+    // it("should be able to tokenize an ingredient with phonetics for pint", () => {
+    //     const result = lex("1/2 pnt all purpose flour")
+    //     expect(result.tokens.map(token => token.image)).toEqual(["1/2 pnt", "all", "purpose", "flour"])
+    //     // the payload holds the actual unit calculated from the text, but in this case, pnt is matches
+    //     // the phonetic value for pound and pint, and because pound appears first, it calculates it as pound.
+    //     expect(result.tokens[0].payload).toEqual({quantity: [1, 2], unit: 'lb'})
+    // })
     it("should be able to tokenize an ingredient with 1)", () => {
         const result = lex("1) 1/2 cup all purpose flour")
         expect(result.tokens.map(token => token.image))
