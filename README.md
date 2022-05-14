@@ -124,7 +124,7 @@ As a more complete example, we parse the text for a fake Piri-Piri chicken recip
 To use the recipe parser, add the library to your project
 
 ```shell
-npm install recipe-parser
+npm install @saucie/recipe-parser
 ```
 
 and install the peer dependencies
@@ -132,7 +132,7 @@ and install the peer dependencies
 ```shell
 npm install chevrotain
 npm install pluralize
-npm instal xregexp
+npm install xregexp
 ```
 
 Version compatibility
@@ -146,14 +146,13 @@ Version compatibility
 Add an import to your module
 
 ```typescript
-import {toRecipe} from "recipe-parser";
+import {toRecipe} from "@saucie/recipe-parser";
 ```
 
 And then call the `toRecipe(...)` function with any options
 
 ```typescript
-import {toRecipe} from "recipe-parser";
-import {ParseType} from "./RecipeParser";
+import {toRecipe, ParseType} from "@saucie/recipe-parser";
 
 const myRecipe = "some recipe text"
 const {recipe, errors} = toRecipe(myRecipe, {deDupSections: true, inputType: ParseType.RECIPE})
