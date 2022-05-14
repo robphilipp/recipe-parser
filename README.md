@@ -143,35 +143,35 @@ const myRecipe = "some recipe text"
 const {recipe, errors} = toRecipe(myRecipe, {deDupSections: true, inputType: ParseType.RECIPE})
 ```
 
-If there are no errors, the recipe will be a JSON object of type `RecipeAst`
+If there are no errors, the recipe will be a JSON object of type `Recipe`
 
 ```typescript
-type RecipeAst = {
+export type Recipe = {
     type: string
-    ingredients: Array<IngredientItemType>
-    steps: Array<StepItemType>
+    ingredients: Array<Ingredient>
+    steps: Array<Step>
 }
 
 // which depends on the following definitions
-type IngredientItemType = {
-    amount: AmountType
+export type Ingredient = {
+    amount: Amount
     ingredient: string
     section: string | null
     brand: string | null
 }
 
-type StepItemType = {
+export type Step = {
     id: string
     title: string | null
     step: string
 }
 
-type AmountType = {
+export type Amount = {
     quantity: number
-    unit: UnitType
+    unit: Unit
 }
 
-enum UnitType {
+enum Unit {
     MILLIGRAM = 'mg', GRAM = 'g', KILOGRAM = 'kg',
     OUNCE = 'oz', POUND = 'lb',
     MILLILITER = 'ml', LITER = 'l', TEASPOON = 'tsp', TABLESPOON = 'tbsp', FLUID_OUNCE = 'fl oz',
@@ -227,7 +227,7 @@ and the recipe result is defined as
  * The result of the lexing, parsing, and visiting.
  */
 export type RecipeResult = {
-    recipe: RecipeAst,
+    recipe: Recipe,
     errors: Array<ILexingError>
 }
 ```

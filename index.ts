@@ -6,10 +6,10 @@ export {
     toRecipe,
     Options,
     defaultOptions,
-    RecipeAst,
-    IngredientItemType,
-    StepItemType,
-    AmountType
+    Recipe,
+    Ingredient,
+    Step,
+    Amount
 } from "./recipes/RecipeCstVisitor"
 
-export {UnitType} from "./recipes/lexer/Units"
+export {Unit} from "./recipes/lexer/Units"

@@ -1,5 +1,5 @@
 import {ParseType, RecipeParser, RecipeParseResult, RuleName, StartRule} from "./RecipeParser";
-import {UnitType} from "./lexer/Units";
+import {Unit} from "./lexer/Units";
 import {CstChildrenDictionary, CstNode, ILexingError, IToken} from "chevrotain";
 import {lex} from "./lexer/RecipeLexer";
 
@@ -7,7 +7,7 @@ import {lex} from "./lexer/RecipeLexer";
  * The result of the lexing, parsing, and visiting.
  */
 export type RecipeResult = {
-    recipe: RecipeAst,
+    recipe: Recipe,
     errors: Array<ILexingError>
 }
 
@@ -44,7 +44,7 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
      * @param context The context holding the parts of the recipe
      * @return The recipe object or a fragment of the recipe object
      */
-    sections(context: SectionsContext): RecipeAst {
+    sections(context: SectionsContext): Recipe {
         const ingredients = context.ingredients?.flatMap(cstNode => this.visit(cstNode))
         const steps = context.steps?.flatMap(cstNode => this.visit(cstNode))
         return {
@@ -60,7 +60,7 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
      * @return A list of ingredients
      */
     // ingredients(context: IngredientsContext): Array<Ingredient> {
-    ingredients(context: IngredientsContext): Array<IngredientItemType> {
+    ingredients(context: IngredientsContext): Array<Ingredient> {
         // there are one or more ingredients, so we need to run through the list
         const ingredients = context.ingredientItem?.map(cstNode => this.visit(cstNode)) || []
         const sections = context.ingredientsSection?.flatMap(cstNode => this.visit(cstNode)) || []
@@ -72,7 +72,7 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
      * @param context The steps context that holds the steps and sections
      * @return A list of steps
      */
-    steps(context: StepsContext): Array<StepItemType> {
+    steps(context: StepsContext): Array<Step> {
     // steps(context: StepsContext): Array<Step> {
         // there are one or more steps, so we need to run through the list
         const steps = context.stepItem?.map(cstNode => this.visit(cstNode)) || []
@@ -87,7 +87,7 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
      * ingredients that belong to that section.
      * @return An array of ingredient items (list id, amount, ingredient, section, brand)
      */
-    ingredientsSection(context: IngredientsSectionContext): Array<IngredientItemType> {
+    ingredientsSection(context: IngredientsSectionContext): Array<Ingredient> {
         const section = context.SectionHeader[0].payload
         const ingredients = context.ingredientItem.map(cstNode => this.visit(cstNode))
         // when user only wants the first ingredient to have the section header set, then de-dup it true
@@ -104,7 +104,7 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
      * @param context The steps section context that holds the steps and steps section.
      * @return An array of steps items (list id, step)
      */
-    stepsSection(context: StepsSectionContext): Array<StepItemType> {
+    stepsSection(context: StepsSectionContext): Array<Step> {
         const title = context.SectionHeader[0].payload
         const steps = context.stepItem.map(cstNode => this.visit(cstNode))
         // when user only wants the first step to have the section header set, then de-dup it true
@@ -131,7 +131,7 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
      * @param context The ingredient item context that holds the amount, ingredient, section, and brand
      * @return The ingredient item
      */
-    ingredientItem(context: IngredientItemContext): IngredientItemType {
+    ingredientItem(context: IngredientItemContext): Ingredient {
         const amount = this.visit(context.amount)
         const ingredient = this.visit(context.ingredient)
 
@@ -145,7 +145,7 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
      * @param context The step item context that holds the step ID and the step (instructions)
      * @return The step item
      */
-    stepItem(context: StepItemContext): StepItemType {
+    stepItem(context: StepItemContext): Step {
         const listItemId = this.visit(context.listItemId)
         const step = this.visit(context.step)
         return {id: listItemId, step, title: null}
@@ -156,7 +156,7 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
      * @param context The context holding the quantity and the unit
      * @return The amount
      */
-    amount(context: AmountContext): AmountType {
+    amount(context: AmountContext): Amount {
         const {quantity, unit} = context.Amount[0].payload
         const [numerator, denominator] = quantity
         return {quantity: numerator / denominator, unit}
@@ -304,26 +304,26 @@ type StepContext = CstChildrenDictionary & {
 /*
  | RETURN TYPES
  */
-export type RecipeAst = {
+export type Recipe = {
     type: string
-    ingredients: Array<IngredientItemType>
-    steps: Array<StepItemType>
+    ingredients: Array<Ingredient>
+    steps: Array<Step>
 }
 
-export type IngredientItemType = {
-    amount: AmountType
+export type Ingredient = {
+    amount: Amount
     ingredient: string
     section: string | null
     brand: string | null
 }
 
-export type StepItemType = {
+export type Step = {
     id: string
     title: string | null
     step: string
 }
 
-export type AmountType = {
+export type Amount = {
     quantity: number
-    unit: UnitType
+    unit: Unit
 }

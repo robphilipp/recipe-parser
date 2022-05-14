@@ -5,7 +5,7 @@
 import {CustomPatternMatcherReturn} from "@chevrotain/types";
 import {regexParts} from "./RegExpParts";
 import {Fraction, fractionFromUnicode, isValidFraction} from "./Numbers";
-import {baseUnits, phoneticUnits, pluralUnits, UnitInfo, UnitType} from "./Units";
+import {baseUnits, phoneticUnits, pluralUnits, UnitInfo, Unit} from "./Units";
 import * as Natural from "natural";
 
 /**
@@ -282,7 +282,7 @@ export function amountMatcher(text: string, startOffset: number): CustomPatternM
             const result: CustomPatternMatcherReturn = [quantity[0]]
             result.payload = {
                 quantity: quantity.payload,
-                unit: UnitType.PIECE
+                unit: Unit.PIECE
             }
             return result
         }
@@ -395,12 +395,12 @@ export function matchStepsSection(text: string, startOffset: number): CustomPatt
 type SlangAmount = {
     slang: string
     quantity: Fraction
-    unit: UnitType
+    unit: Unit
 }
 const slangAmounts: Array<SlangAmount> = [
-    {slang: 'a pinch', quantity: [1, 1], unit: UnitType.PINCH},
-    {slang: 'a touch', quantity: [1, 1], unit: UnitType.PINCH},
-    {slang: 'to taste', quantity: [1, 1], unit: UnitType.PINCH},
+    {slang: 'a pinch', quantity: [1, 1], unit: Unit.PINCH},
+    {slang: 'a touch', quantity: [1, 1], unit: Unit.PINCH},
+    {slang: 'to taste', quantity: [1, 1], unit: Unit.PINCH},
 ]
 
 /**
