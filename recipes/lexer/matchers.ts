@@ -5,8 +5,10 @@
 import {CustomPatternMatcherReturn} from "@chevrotain/types";
 import {regexParts} from "./RegExpParts";
 import {Fraction, fractionFromUnicode, isValidFraction} from "./Numbers";
-import {baseUnits, phoneticUnits, pluralUnits, UnitInfo, Unit} from "./Units";
-import * as Natural from "natural";
+// import {baseUnits, phoneticUnits, pluralUnits, UnitInfo, Unit} from "./Units";
+import {baseUnits, pluralUnits, UnitInfo, Unit} from "./Units";
+// import * as Natural from "natural";
+import pluralize from "pluralize"
 
 /**
  * Matches a quantity, which could be a whole number and a fraction, a whole number and a unicode
@@ -175,10 +177,10 @@ export function unitMatcher(text: string, startOffset: number): CustomPatternMat
     }
 
     // check phonetics as a last resort
-    const phonetics = matchingSynonym(text, startOffset, Object.entries(phoneticUnits))
-    if (phonetics !== undefined) {
-        return phonetics
-    }
+    // const phonetics = matchingSynonym(text, startOffset, Object.entries(phoneticUnits))
+    // if (phonetics !== undefined) {
+    //     return phonetics
+    // }
 
     // no match
     return null
@@ -344,10 +346,11 @@ export function isLeadingValid(text: string, startOffset: number): boolean {
  | recipe parts (sections)
  */
 
-const inflector = new Natural.NounInflector()
+// const inflector = new Natural.NounInflector()
 
 const ingredientSynonyms = ['ingredient list', 'ingredient']
-    .flatMap(synonym => [synonym, inflector.pluralize(synonym)])
+    // .flatMap(synonym => [synonym, inflector.pluralize(synonym)])
+    .flatMap(synonym => [synonym, pluralize(synonym)])
 
 export const INGREDIENTS_HEADER = "ingredients"
 
@@ -368,7 +371,8 @@ export function matchIngredientsSection(text: string, startOffset: number): Cust
 
 
 const stepsSynonyms = ['step', 'method', 'process', 'instruction']
-    .flatMap(synonym => [synonym, inflector.pluralize(synonym)])
+    // .flatMap(synonym => [synonym, inflector.pluralize(synonym)])
+    .flatMap(synonym => [synonym, pluralize(synonym)])
 
 export const STEPS_HEADER = "steps"
 

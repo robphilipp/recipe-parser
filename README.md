@@ -127,6 +127,14 @@ To use the recipe parser, add the library to your project
 npm install recipe-parser
 ```
 
+and install the peer dependencies
+
+```shell
+npm install chevrotain@10.1.2
+npm install pluralize@8.0.0
+npm instal xregexp@5.1.0
+```
+
 Add an import to your module
 
 ```typescript
