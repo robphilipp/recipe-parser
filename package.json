@@ -1,5 +1,5 @@
 {
-  "name": "recipe-parser",
+  "name": "@saucie/recipe-parser",
   "version": "0.0.1",
   "description": "Recipe Parser",
   "author": "Rob Philipp",
@@ -11,7 +11,7 @@
   "scripts": {
     "prepare": "npm run build",
     "build": "tsc",
-    "test": "jest --watch [*/]*.test.ts"
+    "test": "jest --watch recipes/[*/]*.test.ts"
   },
   "devDependencies": {
     "@types/jest": "^27.4.1",

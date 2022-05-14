@@ -1,131 +1,12 @@
-import {createToken, ILexingResult, Lexer, TokenType} from 'chevrotain'
-import {baseUnits, phoneticUnits, pluralUnits, UnitInfo, UnitType} from "./Units";
-import {CustomPatternMatcherReturn} from "@chevrotain/types";
-import {Fraction, fractionFromUnicode, isValidFraction} from "./Numbers";
-import {regexParts} from "./RegExpParts";
-
-/*
- | NUMBERS
- */
-const Integer = createToken({
-    name: "Integer",
-    pattern: regexParts.regex("{{IntegerPart}}")
-})
-const Decimal = createToken({
-    name: "Decimal",
-    pattern: regexParts.regex("{{IntegerPart}}{{FractionalPart}}"),
-    longer_alt: Integer
-})
-const Fraction = createToken({
-    name: "Fraction",
-    pattern: regexParts.regex("{{IntegerPart}}/{{NaturalNumberPart}}"),
-    longer_alt: Integer
-})
-const UnicodeFraction = createToken({
-    name: "UnicodeFraction",
-    pattern: matchUnicodeFraction,
-    line_breaks: false
-})
-
-const WholeFraction = createToken({
-    name: "WholeFraction",
-    pattern: matchFraction,
-    longer_alt: Fraction,
-    line_breaks: false
-})
-const Quantity = createToken({
-    name: "Quantity",
-    pattern: matchQuantity,
-    line_breaks: false,
-    longer_alt: WholeFraction
-})
-
-const Unit = createToken({
-    name: "Unit",
-    pattern: unitMatcher,
-    line_breaks: false
-})
-
-const Amount = createToken({
-    name: "Amount",
-    pattern: amountMatcher,
-    line_breaks: false,
-    longer_alt: Quantity
-})
-
-const Word = createToken({
-    name: "Word",
-    pattern: regexParts.regex("{{WordPart}}")
-})
-const WhiteSpace = createToken({
-    name: "WhiteSpace",
-    pattern: regexParts.regex("{{WhiteSpace}}"),
-    group: Lexer.SKIPPED
-})
-const NewLine = createToken({
-    name: "NewLine",
-    pattern: regexParts.regex("{{NewLine}}"),
-    group: Lexer.SKIPPED
-})
-const ListItemId = createToken({
-    name: "ListItemId",
-    pattern: /(\(?\d+((.\))|[.):]))|[*•-]\w*/,
-    longer_alt: Decimal,
-})
-const SectionHeader = createToken({
-    name: "SectionHeader",
-    pattern: sectionMatcher,
-    longer_alt: Word,
-    line_breaks: false
-})
-
-/**
- * Holds the tokens used to parse the recipe. **Note** that the *order* in which these appear *matters*.
- */
-export const recipeTokens = [
-    NewLine,
-    WhiteSpace,
-    ListItemId,
-    Amount, Quantity, WholeFraction, UnicodeFraction, Fraction, Decimal, Integer,
-    Unit,
-    SectionHeader,
-    Word,
-]
-
-export const recipeTokenVocabulary = recipeTokens.reduce((vocab, token) => {
-    vocab[token.name] = token
-    return vocab
-}, {} as { [key: string]: TokenType })
-
-
-// todo see multi-mode lexing https://github.com/Chevrotain/chevrotain/blob/master/examples/lexer/multi_mode_lexer/multi_mode_lexer.js
-//      so that each section have a mode
-
-let recipeLexer: Lexer
-
-/**
- * Converts the input text into a lexing result that can be parsed into an AST or CST.
- * @param input The input string
- * @param [logWarnings = false] When set to `true` then logs warning to the console, otherwise
- * does not log warnings. Warning and errors are reported in the returned object in either case.
- * @return The {@link ILexingResult} object holding the result of the lexing operation
- */
-export function lex(input: string, logWarnings: boolean = false): ILexingResult {
-    if (recipeLexer === undefined) {
-        recipeLexer = new Lexer(recipeTokens)
-    }
-    const result = recipeLexer.tokenize(input)
-
-    if (logWarnings && result.errors.length > 0) {
-        console.warn(`Failed lexing with errors: ${result.errors.map(error => error.message).join(";")}`)
-    }
-
-    return result
-}
-
 /*
  | MATCHING FUNCTIONS
  */
+
+import {CustomPatternMatcherReturn} from "@chevrotain/types";
+import {regexParts} from "./RegExpParts";
+import {Fraction, fractionFromUnicode, isValidFraction} from "./Numbers";
+import {baseUnits, phoneticUnits, pluralUnits, UnitInfo, Unit} from "./Units";
+import * as Natural from "natural";
 
 /**
  * Matches a quantity, which could be a whole number and a fraction, a whole number and a unicode
@@ -134,7 +15,7 @@ export function lex(input: string, logWarnings: boolean = false): ILexingResult 
  * @param startOffset The current offset into the text
  * @return A quantity, if found, or null if not found
  */
-function matchQuantity(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+export function matchQuantity(text: string, startOffset: number): CustomPatternMatcherReturn | null {
     const slang = matchSlangQuantities(text, startOffset)
     if (slang !== null) {
         return slang
@@ -160,7 +41,7 @@ function matchQuantity(text: string, startOffset: number): CustomPatternMatcherR
 }
 
 // the supported slang quantities
-const slangQuantities: Array<[string, Fraction]> = [
+export const slangQuantities: Array<[string, Fraction]> = [
     ['a couple', [2, 1]], ['a few', [3, 1]], ['several', [3, 1]]//, ['an', [1, 1]], ['a', [1, 1]],
 ]
 
@@ -173,7 +54,7 @@ const slangQuantities: Array<[string, Fraction]> = [
  * numerator and denominator. For example, if the text is "a couple" then the payload would be `[2, 1]`
  * which represents `2`
  */
-function matchSlangQuantities(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+export function matchSlangQuantities(text: string, startOffset: number): CustomPatternMatcherReturn | null {
     for (let [slang, fraction] of slangQuantities) {
         if (text.startsWith(slang, startOffset)) {
             const result: CustomPatternMatcherReturn = [slang]
@@ -193,7 +74,7 @@ function matchSlangQuantities(text: string, startOffset: number): CustomPatternM
  * numerator and denominator. For example, if the text is "2 3/5" then the payload would be "[13, 5]"
  * which represents "13/5"
  */
-function matchFraction(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+export function matchFraction(text: string, startOffset: number): CustomPatternMatcherReturn | null {
     const currentText = text.slice(startOffset)
     // when the number has an integer and a fraction (e.g. 1 1/4), then parse them into
     // that same token. we attempt to match an integer part (plus trailing whitespace)
@@ -232,7 +113,7 @@ function matchFraction(text: string, startOffset: number): CustomPatternMatcherR
  * @return The match, with the payload set to the {@link Fraction} numerator and denominator; or `null`
  * if the unicode character at the current position is not a "vulgar fraction"
  */
-function matchUnicodeFraction(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+export function matchUnicodeFraction(text: string, startOffset: number): CustomPatternMatcherReturn | null {
     // the character at the current lexer position
     const currentChar = text.charAt(startOffset)
     const currentText = text.slice(startOffset)
@@ -276,7 +157,7 @@ function matchUnicodeFraction(text: string, startOffset: number): CustomPatternM
  * @param startOffset The current location in the text
  * @return A pattern matching result if the text matches the unit or null if there is no match
  */
-function unitMatcher(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+export function unitMatcher(text: string, startOffset: number): CustomPatternMatcherReturn | null {
     // try (in order) plural synonyms, singular synonyms, phonetic names
     const synonym = matchingSynonym(text, startOffset, Object.entries(pluralUnits).concat(Object.entries(baseUnits)))
     if (synonym !== undefined) {
@@ -310,7 +191,7 @@ function unitMatcher(text: string, startOffset: number): CustomPatternMatcherRet
  * @param units The array `(field_name, unit_info)` pairs
  * @return A custom pattern match result if found or undefined if not found
  */
-function matchingSynonym(
+export function matchingSynonym(
     text: string,
     startOffset: number,
     units: Array<[string, UnitInfo]>
@@ -331,7 +212,7 @@ function matchingSynonym(
  * @param units The array `(field_name, unit_info)` pairs
  * @return A custom pattern match result if found or undefined if not found
  */
-function matchingAbbreviation(
+export function matchingAbbreviation(
     text: string,
     startOffset: number,
     units: Array<[string, UnitInfo]>
@@ -354,7 +235,7 @@ function matchingAbbreviation(
  * unit info object.
  * @return A tuple holding the matched text and the matched unit info
  */
-function matchingUnit(
+export function matchingUnit(
     text: string,
     startOffset: number,
     units: Array<[fiedlName: string, info: UnitInfo]>,
@@ -378,7 +259,7 @@ function matchingUnit(
  * @param startOffset The current location in the text
  * @return The matcher return with a payload if found; otherwise null
  */
-function amountMatcher(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+export function amountMatcher(text: string, startOffset: number): CustomPatternMatcherReturn | null {
     // in case there are slang expressions such as "a pinch", "a touch", "to taste"
     const slang = matchSlangAmounts(text, startOffset)
     if (slang !== null) {
@@ -401,7 +282,7 @@ function amountMatcher(text: string, startOffset: number): CustomPatternMatcherR
             const result: CustomPatternMatcherReturn = [quantity[0]]
             result.payload = {
                 quantity: quantity.payload,
-                unit: UnitType.PIECE
+                unit: Unit.PIECE
             }
             return result
         }
@@ -416,7 +297,7 @@ function amountMatcher(text: string, startOffset: number): CustomPatternMatcherR
  * @param startOffset The current location in the text
  * @return The matcher return with a payload if found; otherwise null
  */
-function sectionMatcher(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+export function matchSection(text: string, startOffset: number): CustomPatternMatcherReturn | null {
     // if the text matches an amount, then we don't want the section to match
     if (amountMatcher(text, startOffset) !== null) return null
 
@@ -444,13 +325,14 @@ function sectionMatcher(text: string, startOffset: number): CustomPatternMatcher
     return null
 }
 
+
 /**
  * Determines whether there are just has leading spaces or tabs after the newline
  * @param text The text to search
  * @param startOffset The current location in the text
  * @return `true` if there are just leading spaces or table after the newline
  */
-function isLeadingValid(text: string, startOffset: number): boolean {
+export function isLeadingValid(text: string, startOffset: number): boolean {
     if (startOffset === 0) return true
     if (text.charAt(startOffset-1) === ' ' || text.charAt(startOffset-1) === '\t') {
         return isLeadingValid(text, startOffset-1)
@@ -458,18 +340,67 @@ function isLeadingValid(text: string, startOffset: number): boolean {
     return text.charAt(startOffset - 1) == '\n';
 }
 
+/*
+ | recipe parts (sections)
+ */
+
+const inflector = new Natural.NounInflector()
+
+const ingredientSynonyms = ['ingredient list', 'ingredient']
+    .flatMap(synonym => [synonym, inflector.pluralize(synonym)])
+
+export const INGREDIENTS_HEADER = "ingredients"
+
+/**
+ * Attempts to match an ingredients' section header
+ * @param text The text
+ * @param startOffset The current location in the text
+ * @return The pattern match result if found, or null otherwise
+ */
+export function matchIngredientsSection(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+    const result = matchSection(text, startOffset)
+    if (result !== null && ingredientSynonyms.indexOf(result.payload.header.toLowerCase()) >= 0) {
+        result.payload = {header: INGREDIENTS_HEADER}
+        return result
+    }
+    return null
+}
+
+
+const stepsSynonyms = ['step', 'method', 'process', 'instruction']
+    .flatMap(synonym => [synonym, inflector.pluralize(synonym)])
+
+export const STEPS_HEADER = "steps"
+
+/**
+ * Attempts to match a steps' section header
+ * @param text The text
+ * @param startOffset The current location in the text
+ * @return The pattern match result if found, or null otherwise
+ */
+export function matchStepsSection(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+    const result = matchSection(text, startOffset)
+    if (result !== null && stepsSynonyms.indexOf(result.payload.header.toLowerCase()) >= 0) {
+        result.payload = {header: STEPS_HEADER}
+        return result
+    }
+    return null
+}
+
+
+
 /**
  * Slang amounts
  */
 type SlangAmount = {
     slang: string
     quantity: Fraction
-    unit: UnitType
+    unit: Unit
 }
 const slangAmounts: Array<SlangAmount> = [
-    {slang: 'a pinch', quantity: [1, 1], unit: UnitType.PINCH},
-    {slang: 'a touch', quantity: [1, 1], unit: UnitType.PINCH},
-    {slang: 'to taste', quantity: [1, 1], unit: UnitType.PINCH},
+    {slang: 'a pinch', quantity: [1, 1], unit: Unit.PINCH},
+    {slang: 'a touch', quantity: [1, 1], unit: Unit.PINCH},
+    {slang: 'to taste', quantity: [1, 1], unit: Unit.PINCH},
 ]
 
 /**
@@ -478,7 +409,7 @@ const slangAmounts: Array<SlangAmount> = [
  * @param startOffset The current location in the text
  * @return The matcher return with a payload if found; otherwise null
  */
-function matchSlangAmounts(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+export function matchSlangAmounts(text: string, startOffset: number): CustomPatternMatcherReturn | null {
     for (let {slang, quantity, unit} of slangAmounts) {
         if (text.startsWith(slang, startOffset)) {
             const result: CustomPatternMatcherReturn = [slang]
