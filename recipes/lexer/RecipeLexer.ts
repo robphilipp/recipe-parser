@@ -135,7 +135,6 @@ let recipeLexer: Lexer
  */
 export function lex(input: string, logWarnings: boolean = false): ILexingResult {
     if (recipeLexer === undefined) {
-        // recipeLexer = new Lexer(multiModeLexerDefinition)
         recipeLexer = new Lexer(recipeTokens)
     }
     const result = recipeLexer.tokenize(input)

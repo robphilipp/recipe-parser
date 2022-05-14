@@ -59,7 +59,6 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
      * @param context The ingredient context that holds the ingredients and sections
      * @return A list of ingredients
      */
-    // ingredients(context: IngredientsContext): Array<Ingredient> {
     ingredients(context: IngredientsContext): Array<Ingredient> {
         // there are one or more ingredients, so we need to run through the list
         const ingredients = context.ingredientItem?.map(cstNode => this.visit(cstNode)) || []
@@ -73,7 +72,6 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
      * @return A list of steps
      */
     steps(context: StepsContext): Array<Step> {
-    // steps(context: StepsContext): Array<Step> {
         // there are one or more steps, so we need to run through the list
         const steps = context.stepItem?.map(cstNode => this.visit(cstNode)) || []
         const sections = context.stepsSection?.flatMap(cstNode => this.visit(cstNode)) || []
@@ -181,69 +179,6 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
     }
 }
 
-// singleton recipe object that can be recreated with a different configuration
-let toAstVisitorInstance: RecipeCstVisitor
-
-export type Options = {
-    // When set to `true` only sets the section of the first ingredient of each
-    // section to current section.
-    deDupSections?: boolean
-    // When set to `true` then logs warning to the console, otherwise
-    // does not log warnings. Warning and errors are reported in the returned object
-    // in either case.
-    logWarnings?: boolean
-    // The thing that the input text represents: a whole recipe, a list of ingredients,
-    // or a list of steps.
-    inputType?: ParseType
-}
-
-export const defaultOptions: Options = {
-    deDupSections: false,
-    logWarnings: false,
-    inputType: ParseType.RECIPE
-}
-
-/**
- * Converts the text to a list of recipe ingredients with optional sections. This is the
- * function to call to convert a test recipe into a recipe object.
- * @param text The text to convert into a recipe object
- * @param [options = defaultOptions] The options used for parsing the text into a
- * recipe or recipe fragment.
- * @return A recipe result holding the recipe object and any parsing errors
- */
-export function toRecipe(text: string, options: Options = defaultOptions): RecipeResult {
-    const {
-        deDupSections = false,
-        logWarnings = false,
-        inputType = ParseType.RECIPE
-    } = options
-
-    if (toAstVisitorInstance === undefined || toAstVisitorInstance.deDupSections !== deDupSections) {
-        toAstVisitorInstance = new RecipeCstVisitor(deDupSections)
-    }
-
-    function parse(input: string): RecipeParseResult {
-        const lexingResult = lex(input, logWarnings)
-
-        if (parserInstance !== undefined) {
-            parserInstance.reset()
-        }
-        if (parserInstance === null) throw Error("Parser instance is null")
-        parserInstance.input = lexingResult.tokens
-
-        // start parsing at the specified rule
-        const cst = parserInstance[StartRule.get(inputType) || RuleName.SECTIONS]()
-
-        return {parserInstance, cst, lexingResult}
-    }
-
-    const {cst, lexingResult} = parse(text)
-
-    return {
-        recipe: toAstVisitorInstance.visit(cst),
-        errors: lexingResult.errors
-    }
-}
 
 /*
  | SUPPORTING TYPES
@@ -326,4 +261,70 @@ export type Step = {
 export type Amount = {
     quantity: number
     unit: Unit
+}
+
+
+
+// singleton recipe object that can be recreated with a different configuration
+let toAstVisitorInstance: RecipeCstVisitor
+
+export type Options = {
+    // When set to `true` only sets the section of the first ingredient of each
+    // section to current section.
+    deDupSections?: boolean
+    // When set to `true` then logs warning to the console, otherwise
+    // does not log warnings. Warning and errors are reported in the returned object
+    // in either case.
+    logWarnings?: boolean
+    // The thing that the input text represents: a whole recipe, a list of ingredients,
+    // or a list of steps.
+    inputType?: ParseType
+}
+
+export const defaultOptions: Options = {
+    deDupSections: false,
+    logWarnings: false,
+    inputType: ParseType.RECIPE
+}
+
+/**
+ * Converts the text to a list of recipe ingredients with optional sections. This is the
+ * function to call to convert a test recipe into a recipe object.
+ * @param text The text to convert into a recipe object
+ * @param [options = defaultOptions] The options used for parsing the text into a
+ * recipe or recipe fragment.
+ * @return A recipe result holding the recipe object and any parsing errors
+ */
+export function toRecipe(text: string, options: Options = defaultOptions): RecipeResult {
+    const {
+        deDupSections = false,
+        logWarnings = false,
+        inputType = ParseType.RECIPE
+    } = options
+
+    if (toAstVisitorInstance === undefined || toAstVisitorInstance.deDupSections !== deDupSections) {
+        toAstVisitorInstance = new RecipeCstVisitor(deDupSections)
+    }
+
+    function parse(input: string): RecipeParseResult {
+        const lexingResult = lex(input, logWarnings)
+
+        if (parserInstance !== undefined) {
+            parserInstance.reset()
+        }
+        if (parserInstance === null) throw Error("Parser instance is null")
+        parserInstance.input = lexingResult.tokens
+
+        // start parsing at the specified rule
+        const cst = parserInstance[StartRule.get(inputType) || RuleName.SECTIONS]()
+
+        return {parserInstance, cst, lexingResult}
+    }
+
+    const {cst, lexingResult} = parse(text)
+
+    return {
+        recipe: toAstVisitorInstance.visit(cst),
+        errors: lexingResult.errors
+    }
 }

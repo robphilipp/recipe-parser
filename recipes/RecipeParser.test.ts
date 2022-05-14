@@ -412,7 +412,9 @@ sauce
 
         const sauceStepsItems = stepsSauce.children.stepItem as Array<CstNode>
         const sauceStepOne = sauceStepsItems[0] as CstNode
+
         expect((sauceStepOne.children.listItemId[0] as CstNode).name).toBe("listItemId")
+        expect(sauceStepOne.name).toBe("stepItem")
         const sauceStepOneListItem = sauceStepOne.children.listItemId[0] as CstNode
         expect((sauceStepOneListItem.children.ListItemId[0] as IToken).image).toBe("1)")
 

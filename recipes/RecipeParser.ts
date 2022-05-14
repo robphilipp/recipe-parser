@@ -28,7 +28,6 @@ export enum RuleName {
  */
 export class RecipeParser extends CstParser {
     constructor() {
-        // super(multiModeLexerDefinition);
         super(recipeTokenVocabulary);
 
         this.performSelfAnalysis()
@@ -188,6 +187,15 @@ export const StartRule = new Map<ParseType, RuleName>([
     [ParseType.STEPS, RuleName.STEPS]
 ])
 
+/**
+ * Parses the recipe text (input) into a parse result that holds the concrete syntax tree (CST),
+ * the parser instance, and the lexing results.
+ * @param input The input text to be parsed
+ * @param inputType Whether to parser as a recipe (ingredients and steps), a list of ingredients,
+ * or a list of steps. Specifies the parser start rule.
+ * @return a parse result that holds the concrete syntax tree (CST), the parser instance, and
+ * the lexing results.
+ */
 export function parse(input: string, inputType: ParseType = ParseType.RECIPE): RecipeParseResult {
     if (parserInstance === undefined) {
         parserInstance = new RecipeParser()
@@ -196,11 +204,9 @@ export function parse(input: string, inputType: ParseType = ParseType.RECIPE): R
     }
 
     const lexingResult = lex(input)
-
     parserInstance.input = lexingResult.tokens
 
     const cst = parserInstance[StartRule.get(inputType) || RuleName.SECTIONS]()
-    // const cst = parserInstance.sections()
 
     return {parserInstance, cst, lexingResult}
 }
