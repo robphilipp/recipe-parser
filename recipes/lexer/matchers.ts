@@ -5,9 +5,7 @@
 import {CustomPatternMatcherReturn} from "@chevrotain/types";
 import {regexParts} from "./RegExpParts";
 import {Fraction, fractionFromUnicode, isValidFraction} from "./Numbers";
-// import {baseUnits, phoneticUnits, pluralUnits, UnitInfo, Unit} from "./Units";
 import {baseUnits, pluralUnits, UnitInfo, Unit} from "./Units";
-// import * as Natural from "natural";
 import pluralize from "pluralize"
 
 /**
@@ -346,10 +344,7 @@ export function isLeadingValid(text: string, startOffset: number): boolean {
  | recipe parts (sections)
  */
 
-// const inflector = new Natural.NounInflector()
-
 const ingredientSynonyms = ['ingredient list', 'ingredient']
-    // .flatMap(synonym => [synonym, inflector.pluralize(synonym)])
     .flatMap(synonym => [synonym, pluralize(synonym)])
 
 export const INGREDIENTS_HEADER = "ingredients"
@@ -371,7 +366,6 @@ export function matchIngredientsSection(text: string, startOffset: number): Cust
 
 
 const stepsSynonyms = ['step', 'method', 'process', 'instruction']
-    // .flatMap(synonym => [synonym, inflector.pluralize(synonym)])
     .flatMap(synonym => [synonym, pluralize(synonym)])
 
 export const STEPS_HEADER = "steps"

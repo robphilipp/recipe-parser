@@ -1,4 +1,3 @@
-// import * as Natural from "natural";
 import pluralize from "pluralize"
 
 export type UnitInfo = {
@@ -112,15 +111,10 @@ export const baseUnits: Units = {
     }
 }
 
-// const inflector = new Natural.NounInflector()
-// const phonetics = Natural.DoubleMetaphone
-
 // for each of the synonyms, add its plural form
 export const pluralUnits: Units = Object.entries(baseUnits).reduce((obj, [name, info]) => ({
         ...obj,
         [name]: {
-            // abbreviations: info.abbreviations.map(abbr => inflector.pluralize(abbr)),
-            // synonyms: info.synonyms.map(syn => inflector.pluralize(syn)),
             abbreviations: info.abbreviations.map(abbr => pluralize(abbr)),
             synonyms: info.synonyms.map(syn => pluralize(syn)),
             target: info.target
@@ -128,14 +122,3 @@ export const pluralUnits: Units = Object.entries(baseUnits).reduce((obj, [name, 
     }),
     {} as Units
 )
-
-// export const phoneticUnits: Units = Object.entries(baseUnits).reduce((obj, [name, info]) => ({
-//         ...obj,
-//         [name]: {
-//             abbreviations: info.abbreviations,
-//             synonyms: info.synonyms.map(syn => phonetics.process(syn)[0].toLocaleLowerCase()),
-//             target: info.target
-//         }
-//     }),
-//     {} as Units
-// )

@@ -1,6 +1,6 @@
 {
   "name": "@saucie/recipe-parser",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Recipe Parser",
   "author": "Rob Philipp",
   "homepage": "https://github.com/robphilipp/recipe-parser",
@@ -25,8 +25,8 @@
     "xregexp": "^5.1.0"
   },
   "peerDependencies": {
-    "chevrotain": "^10.1.2",
-    "pluralize": "^8.0.0",
-    "xregexp": "^5.1.0"
+    "chevrotain": ">= 10.0",
+    "pluralize": ">= 7.0",
+    "xregexp": ">= 4.0"
   }
 }
