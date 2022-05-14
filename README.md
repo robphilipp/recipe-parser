@@ -1,5 +1,7 @@
 # recipe parser
 
+> See [change history](./CHANGES.md)
+
 In its current incarnation, lexes, parses, and converts, lists of ingredients and steps into a JSON object (see below) used by the [recipe-ui](https://github.com/robphilipp/recipes-ui) project. The goal of the project is to parse entire recipes.
 
 > This is work in progress.
