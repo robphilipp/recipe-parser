@@ -1,5 +1,6 @@
 import {toRecipe} from "./RecipeCstVisitor";
-import {UnitType} from "./Units";
+import {Unit} from "./lexer/Units";
+import {ParseType} from "./RecipeParser";
 
 describe("when creating an ast", () => {
     it("should be able to build recipe from ingredients", () => {
@@ -8,16 +9,14 @@ describe("when creating an ast", () => {
         1 cup milk
         1 egg`
 
-        const {recipe, errors} = toRecipe(input)
+        const {recipe, errors} = toRecipe(input, {inputType: ParseType.INGREDIENTS})
         expect(true).toBeTruthy()
-        expect(recipe).toEqual({
-            type: "ingredients",
-            ingredients: [
-                {amount: {quantity: 1.5, unit: UnitType.CUP}, ingredient: 'all-purpose flour', section: null, brand: null},
-                {amount: {quantity: 1, unit: UnitType.TEASPOON}, ingredient: 'vanilla extract', section: null, brand: null},
-                {amount: {quantity: 1, unit: UnitType.CUP}, ingredient: 'milk', section: null, brand: null},
-                {amount: {quantity: 1, unit: UnitType.PIECE}, ingredient: 'egg', section: null, brand: null},
-            ]})
+        expect(recipe).toEqual([
+                {amount: {quantity: 1.5, unit: Unit.CUP}, ingredient: 'all-purpose flour', section: null, brand: null},
+                {amount: {quantity: 1, unit: Unit.TEASPOON}, ingredient: 'vanilla extract', section: null, brand: null},
+                {amount: {quantity: 1, unit: Unit.CUP}, ingredient: 'milk', section: null, brand: null},
+                {amount: {quantity: 1, unit: Unit.PIECE}, ingredient: 'egg', section: null, brand: null},
+            ])
         expect(errors).toHaveLength(1)
         expect(errors[0]).toEqual({
             offset: 56,
@@ -34,16 +33,14 @@ describe("when creating an ast", () => {
         2) 1 cup milk
         1. 1 egg`
 
-        const {recipe, errors} = toRecipe(input)
+        const {recipe, errors} = toRecipe(input, {inputType: ParseType.INGREDIENTS})
         expect(true).toBeTruthy()
-        expect(recipe).toEqual({
-            type: "ingredients",
-            ingredients: [
-                {amount: {quantity: 1.5, unit: UnitType.CUP}, ingredient: 'all-purpose flour', section: null, brand: null},
-                {amount: {quantity: 1, unit: UnitType.TEASPOON}, ingredient: 'vanilla extract', section: null, brand: null},
-                {amount: {quantity: 1, unit: UnitType.CUP}, ingredient: 'milk', section: null, brand: null},
-                {amount: {quantity: 1, unit: UnitType.PIECE}, ingredient: 'egg', section: null, brand: null},
-            ]})
+        expect(recipe).toEqual([
+                {amount: {quantity: 1.5, unit: Unit.CUP}, ingredient: 'all-purpose flour', section: null, brand: null},
+                {amount: {quantity: 1, unit: Unit.TEASPOON}, ingredient: 'vanilla extract', section: null, brand: null},
+                {amount: {quantity: 1, unit: Unit.CUP}, ingredient: 'milk', section: null, brand: null},
+                {amount: {quantity: 1, unit: Unit.PIECE}, ingredient: 'egg', section: null, brand: null},
+            ])
         expect(errors).toHaveLength(1)
         expect(errors[0]).toEqual({
             offset: 60,
@@ -62,16 +59,14 @@ describe("when creating an ast", () => {
             1 cup milk
             1 egg`
 
-        const {recipe, errors} = toRecipe(input)
+        const {recipe, errors} = toRecipe(input, {inputType: ParseType.INGREDIENTS})
         expect(true).toBeTruthy()
-        expect(recipe).toEqual({
-            type: "ingredients",
-            ingredients: [
-                {amount: {quantity: 1.5, unit: UnitType.CUP}, ingredient: 'all-purpose flour', section: 'dough', brand: null},
-                {amount: {quantity: 1, unit: UnitType.TEASPOON}, ingredient: 'vanilla extract', section: 'dough', brand: null},
-                {amount: {quantity: 1, unit: UnitType.CUP}, ingredient: 'milk', section: 'sauce', brand: null},
-                {amount: {quantity: 1, unit: UnitType.PIECE}, ingredient: 'egg', section: 'sauce', brand: null},
-            ]})
+        expect(recipe).toEqual([
+                {amount: {quantity: 1.5, unit: Unit.CUP}, ingredient: 'all-purpose flour', section: 'dough', brand: null},
+                {amount: {quantity: 1, unit: Unit.TEASPOON}, ingredient: 'vanilla extract', section: 'dough', brand: null},
+                {amount: {quantity: 1, unit: Unit.CUP}, ingredient: 'milk', section: 'sauce', brand: null},
+                {amount: {quantity: 1, unit: Unit.PIECE}, ingredient: 'egg', section: 'sauce', brand: null},
+            ])
         expect(errors).toHaveLength(1)
         expect(errors[0]).toEqual({
             offset: 80,
@@ -91,16 +86,14 @@ describe("when creating an ast", () => {
             1 cup milk
             1 egg`
 
-        const {recipe, errors} = toRecipe(input)
+        const {recipe, errors} = toRecipe(input, {inputType: ParseType.INGREDIENTS})
         expect(true).toBeTruthy()
-        expect(recipe).toEqual({
-            type: "ingredients",
-            ingredients: [
-                {amount: {quantity: 1.5, unit: UnitType.CUP}, ingredient: 'all-purpose flour', section: 'dough', brand: null},
-                {amount: {quantity: 1, unit: UnitType.TEASPOON}, ingredient: 'vanilla extract', section: 'dough', brand: null},
-                {amount: {quantity: 1, unit: UnitType.CUP}, ingredient: 'milk', section: 'sauce', brand: null},
-                {amount: {quantity: 1, unit: UnitType.PIECE}, ingredient: 'egg', section: 'sauce', brand: null},
-            ]})
+        expect(recipe).toEqual([
+                {amount: {quantity: 1.5, unit: Unit.CUP}, ingredient: 'all-purpose flour', section: 'dough', brand: null},
+                {amount: {quantity: 1, unit: Unit.TEASPOON}, ingredient: 'vanilla extract', section: 'dough', brand: null},
+                {amount: {quantity: 1, unit: Unit.CUP}, ingredient: 'milk', section: 'sauce', brand: null},
+                {amount: {quantity: 1, unit: Unit.PIECE}, ingredient: 'egg', section: 'sauce', brand: null},
+            ])
         expect(errors).toHaveLength(1)
         expect(errors[0]).toEqual({
             offset: 93,
@@ -119,15 +112,13 @@ describe("when creating an ast", () => {
             1 cup milk
             1 egg`
 
-        const {recipe, errors} = toRecipe(input, true)
-        expect(recipe).toEqual({
-            type: "ingredients",
-            ingredients: [
-                {amount: {quantity: 1.5, unit: UnitType.CUP}, ingredient: 'all-purpose flour', section: 'dough', brand: null},
-                {amount: {quantity: 1, unit: UnitType.TEASPOON}, ingredient: 'vanilla extract', section: null, brand: null},
-                {amount: {quantity: 1, unit: UnitType.CUP}, ingredient: 'milk', section: 'sauce', brand: null},
-                {amount: {quantity: 1, unit: UnitType.PIECE}, ingredient: 'egg', section: null, brand: null},
-            ]})
+        const {recipe, errors} = toRecipe(input, {deDupSections: true, inputType: ParseType.INGREDIENTS})
+        expect(recipe).toEqual([
+                {amount: {quantity: 1.5, unit: Unit.CUP}, ingredient: 'all-purpose flour', section: 'dough', brand: null},
+                {amount: {quantity: 1, unit: Unit.TEASPOON}, ingredient: 'vanilla extract', section: null, brand: null},
+                {amount: {quantity: 1, unit: Unit.CUP}, ingredient: 'milk', section: 'sauce', brand: null},
+                {amount: {quantity: 1, unit: Unit.PIECE}, ingredient: 'egg', section: null, brand: null},
+            ])
         expect(errors).toHaveLength(1)
         expect(errors[0]).toEqual({
             offset: 78,
@@ -139,10 +130,10 @@ describe("when creating an ast", () => {
         expect(input[78]).toBe(',')
     })
     it("should be able to parse the piri piri chicken recipe", () => {
-        const input = `
+        const input = `Ingredients
         Powder
-            2 tbsp sugar
-            1 tbsp paprika
+            1. 2 tbsp sugar
+            2) 1 tbsp paprika
             1 tbsp coriander
             1 tbsp cumin
             1 1/2 tbsp salt
@@ -154,25 +145,37 @@ describe("when creating an ast", () => {
             1/4 cup red wine vinegar
             Chicken
             1 whole chicken
+            Steps
+            Sauce
+            1. first step
+            2. second step
+            Chicken
+            3) third step
             `
-        const {recipe, errors} = toRecipe(input, true)
+        const {recipe, errors} = toRecipe(input, {deDupSections: true})
         expect(recipe).toEqual({
-            type: "ingredients",
+            type: "recipe",
             ingredients: [
-                {amount: {quantity: 2, unit: UnitType.TABLESPOON}, ingredient: 'sugar', section: 'Powder', brand: null},
-                {amount: {quantity: 1, unit: UnitType.TABLESPOON}, ingredient: 'paprika', section: null, brand: null},
-                {amount: {quantity: 1, unit: UnitType.TABLESPOON}, ingredient: 'coriander', section: null, brand: null},
-                {amount: {quantity: 1, unit: UnitType.TABLESPOON}, ingredient: 'cumin', section: null, brand: null},
-                {amount: {quantity: 1.5, unit: UnitType.TABLESPOON}, ingredient: 'salt', section: null, brand: null},
-                {amount: {quantity: 2, unit: UnitType.TABLESPOON}, ingredient: 'new mexico chile powder', section: null, brand: null},
+                {amount: {quantity: 2, unit: Unit.TABLESPOON}, ingredient: 'sugar', section: 'Powder', brand: null},
+                {amount: {quantity: 1, unit: Unit.TABLESPOON}, ingredient: 'paprika', section: null, brand: null},
+                {amount: {quantity: 1, unit: Unit.TABLESPOON}, ingredient: 'coriander', section: null, brand: null},
+                {amount: {quantity: 1, unit: Unit.TABLESPOON}, ingredient: 'cumin', section: null, brand: null},
+                {amount: {quantity: 1.5, unit: Unit.TABLESPOON}, ingredient: 'salt', section: null, brand: null},
+                {amount: {quantity: 2, unit: Unit.TABLESPOON}, ingredient: 'new mexico chile powder', section: null, brand: null},
 
-                {amount: {quantity: 3, unit: UnitType.PIECE}, ingredient: 'cloves garlic', section: 'Sauce', brand: null},
-                {amount: {quantity: 8, unit: UnitType.PIECE}, ingredient: 'fresno peppers', section: null, brand: null},
-                {amount: {quantity: 0.3333333333333333, unit: UnitType.CUP}, ingredient: 'lemon juice', section: null, brand: null},
-                {amount: {quantity: 0.25, unit: UnitType.CUP}, ingredient: 'red wine vinegar', section: null, brand: null},
+                {amount: {quantity: 3, unit: Unit.PIECE}, ingredient: 'cloves garlic', section: 'Sauce', brand: null},
+                {amount: {quantity: 8, unit: Unit.PIECE}, ingredient: 'fresno peppers', section: null, brand: null},
+                {amount: {quantity: 0.3333333333333333, unit: Unit.CUP}, ingredient: 'lemon juice', section: null, brand: null},
+                {amount: {quantity: 0.25, unit: Unit.CUP}, ingredient: 'red wine vinegar', section: null, brand: null},
 
-                {amount: {quantity: 1, unit: UnitType.PIECE}, ingredient: 'whole chicken', section: 'Chicken', brand: null},
+                {amount: {quantity: 1, unit: Unit.PIECE}, ingredient: 'whole chicken', section: 'Chicken', brand: null},
+            ],
+            steps: [
+                {id: "1.", step: "first step", title: "Sauce"},
+                {id: "2.", step: "second step", title: null},
+                {id: "3)", step: "third step", title: "Chicken"},
             ]
         })
+        expect(errors).toHaveLength(0)
     })
 })

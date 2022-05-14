@@ -1,6 +1,6 @@
 {
-  "name": "recipe-parser",
-  "version": "0.0.1",
+  "name": "@saucie/recipe-parser",
+  "version": "0.1.0",
   "description": "Recipe Parser",
   "author": "Rob Philipp",
   "homepage": "https://github.com/robphilipp/recipe-parser",
@@ -11,18 +11,22 @@
   "scripts": {
     "prepare": "npm run build",
     "build": "tsc",
-    "test": "jest --watch [*/]*.test.ts"
+    "test": "jest --watch recipes/[*/]*.test.ts"
   },
   "devDependencies": {
     "@types/jest": "^27.4.1",
     "@types/natural": "^5.1.1",
+    "@types/pluralize": "^0.0.29",
     "jest": "^27.5.1",
     "ts-jest": "^27.1.3",
-    "typescript": "^4.6.2"
-  },
-  "dependencies": {
+    "typescript": "^4.6.2",
     "chevrotain": "^10.1.2",
-    "natural": "^5.1.13",
+    "pluralize": "^8.0.0",
     "xregexp": "^5.1.0"
+  },
+  "peerDependencies": {
+    "chevrotain": ">= 10.0",
+    "pluralize": ">= 7.0",
+    "xregexp": ">= 4.0"
   }
 }

@@ -1,12 +1,12 @@
-import * as Natural from "natural";
+import pluralize from "pluralize"
 
 export type UnitInfo = {
     abbreviations: Array<string>
     synonyms: Array<string>
-    target: UnitType
+    target: Unit
 }
 
-export enum UnitType {
+export enum Unit {
     MILLIGRAM = 'mg', GRAM = 'g', KILOGRAM = 'kg',
     OUNCE = 'oz', POUND = 'lb',
     MILLILITER = 'ml', LITER = 'l', TEASPOON = 'tsp', TABLESPOON = 'tbsp', FLUID_OUNCE = 'fl oz',
@@ -23,17 +23,17 @@ export const baseUnits: Units = {
     milligram: {
         abbreviations: ['mg'],
         synonyms: ['milligram'],
-        target: UnitType.MILLIGRAM
+        target: Unit.MILLIGRAM
     },
     gram: {
         abbreviations: ['g'],
         synonyms: ['gram'],
-        target: UnitType.GRAM
+        target: Unit.GRAM
     },
     kilogram: {
         abbreviations: ['kg'],
         synonyms: ['kilo', 'kilogram'],
-        target: UnitType.KILOGRAM
+        target: Unit.KILOGRAM
     },
     /*
      | weight
@@ -41,12 +41,12 @@ export const baseUnits: Units = {
     ounce: {
         abbreviations: ['oz'],
         synonyms: ['ounce'],
-        target: UnitType.OUNCE
+        target: Unit.OUNCE
     },
     pound: {
         abbreviations: ['lb'],
         synonyms: ['pound'],
-        target: UnitType.POUND
+        target: Unit.POUND
     },
     /*
      | volume
@@ -54,47 +54,47 @@ export const baseUnits: Units = {
     milliliter: {
         abbreviations: ['ml'],
         synonyms: ['milliliter'],
-        target: UnitType.MILLILITER
+        target: Unit.MILLILITER
     },
     liter: {
         abbreviations: ['l'],
         synonyms: ['litre', 'liter'],
-        target: UnitType.LITER
+        target: Unit.LITER
     },
     teaspoon: {
         abbreviations: ['tsp', 'tspn'],
         synonyms: ['teaspoon'],
-        target: UnitType.TEASPOON
+        target: Unit.TEASPOON
     },
     tablespoon: {
         abbreviations: ['tbsp', 'tbspn'],
         synonyms: ['tablespoon'],
-        target: UnitType.TABLESPOON
+        target: Unit.TABLESPOON
     },
     fluid_ounce: {
         abbreviations: ['floz', 'fl oz'],
         synonyms: ['fluid ounce'],
-        target: UnitType.FLUID_OUNCE
+        target: Unit.FLUID_OUNCE
     },
     cup: {
         abbreviations: ['cp'],
         synonyms: ['cup'],
-        target: UnitType.CUP
+        target: Unit.CUP
     },
     pint: {
         abbreviations: ['pt'],
         synonyms: ['pint'],
-        target: UnitType.PINT
+        target: Unit.PINT
     },
     quart: {
         abbreviations: ['qt'],
         synonyms: ['quart'],
-        target: UnitType.QUART
+        target: Unit.QUART
     },
     gallon: {
         abbreviations: ['gl', 'gal'],
         synonyms: ['gallon'],
-        target: UnitType.GALLON
+        target: Unit.GALLON
     },
     /*
      | misc
@@ -102,35 +102,21 @@ export const baseUnits: Units = {
     piece: {
         abbreviations: ['pce', 'pkg'],
         synonyms: ['piece', 'package'],
-        target: UnitType.PIECE
+        target: Unit.PIECE
     },
     pinch: {
         abbreviations: ['pnch', 'tch'],
         synonyms: ['pinch', 'touch'],
-        target: UnitType.PINCH
+        target: Unit.PINCH
     }
 }
-
-const inflector = new Natural.NounInflector()
-const phonetics = Natural.DoubleMetaphone
 
 // for each of the synonyms, add its plural form
 export const pluralUnits: Units = Object.entries(baseUnits).reduce((obj, [name, info]) => ({
         ...obj,
         [name]: {
-            abbreviations: info.abbreviations.map(abbr => inflector.pluralize(abbr)),
-            synonyms: info.synonyms.map(syn => inflector.pluralize(syn)),
-            target: info.target
-        }
-    }),
-    {} as Units
-)
-
-export const phoneticUnits: Units = Object.entries(baseUnits).reduce((obj, [name, info]) => ({
-        ...obj,
-        [name]: {
-            abbreviations: info.abbreviations,
-            synonyms: info.synonyms.map(syn => phonetics.process(syn)[0].toLocaleLowerCase()),
+            abbreviations: info.abbreviations.map(abbr => pluralize(abbr)),
+            synonyms: info.synonyms.map(syn => pluralize(syn)),
             target: info.target
         }
     }),
