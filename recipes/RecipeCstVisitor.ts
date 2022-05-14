@@ -3,30 +3,6 @@ import {UnitType} from "./lexer/Units";
 import {CstChildrenDictionary, CstNode, ILexingError, IToken} from "chevrotain";
 import {lex} from "./lexer/RecipeLexer";
 
-type Amount = {
-    value: number
-    unit: UnitType
-}
-
-type Ingredient = {
-    id: string
-    // section title that allows ingredients to be organized into sections
-    section: string | null
-    name: string
-    brand: string | null
-    amount: Amount
-}
-
-/**
- * A step in making the recipe
- */
-export type Step = {
-    id: string
-    // section title that allows steps to be organized into sections
-    title: string | null
-    text: string
-}
-
 /**
  * The result of the lexing, parsing, and visiting.
  */
@@ -83,7 +59,8 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
      * @param context The ingredient context that holds the ingredients and sections
      * @return A list of ingredients
      */
-    ingredients(context: IngredientsContext): Array<Ingredient> {
+    // ingredients(context: IngredientsContext): Array<Ingredient> {
+    ingredients(context: IngredientsContext): Array<IngredientItemType> {
         // there are one or more ingredients, so we need to run through the list
         const ingredients = context.ingredientItem?.map(cstNode => this.visit(cstNode)) || []
         const sections = context.ingredientsSection?.flatMap(cstNode => this.visit(cstNode)) || []
@@ -95,7 +72,8 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
      * @param context The steps context that holds the steps and sections
      * @return A list of steps
      */
-    steps(context: StepsContext): Array<Step> {
+    steps(context: StepsContext): Array<StepItemType> {
+    // steps(context: StepsContext): Array<Step> {
         // there are one or more steps, so we need to run through the list
         const steps = context.stepItem?.map(cstNode => this.visit(cstNode)) || []
         const sections = context.stepsSection?.flatMap(cstNode => this.visit(cstNode)) || []
@@ -326,26 +304,26 @@ type StepContext = CstChildrenDictionary & {
 /*
  | RETURN TYPES
  */
-type RecipeAst = {
+export type RecipeAst = {
     type: string
-    ingredients: Array<Ingredient>
-    steps: Array<Step>
+    ingredients: Array<IngredientItemType>
+    steps: Array<StepItemType>
 }
 
-type IngredientItemType = {
+export type IngredientItemType = {
     amount: AmountType
     ingredient: string
     section: string | null
     brand: string | null
 }
 
-type StepItemType = {
+export type StepItemType = {
     id: string
     title: string | null
     step: string
 }
 
-type AmountType = {
+export type AmountType = {
     quantity: number
     unit: UnitType
 }

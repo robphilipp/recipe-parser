@@ -1,37 +1,28 @@
 # recipe parser
 
+In its current incarnation, lexes, parses, and converts, lists of ingredients and steps into a JSON object (see below) used by the [recipe-ui](https://github.com/robphilipp/recipes-ui) project. The goal of the project is to parse entire recipes.
+
 > This is work in progress.
 
 A shout-out to the awesome libraries the recipe parser relies on
 
-1. [chevrotain](https://chevrotain.io/docs/) for lexing, parsing, and semantics.
+1. [Chevrotain](https://chevrotain.io/docs/) for lexing, parsing, and semantics.
 2. [natural](https://github.com/NaturalNode/natural) for pluralization and phonetics.
 3. [XRegExp](https://github.com/slevithan/xregexp) for sanity using regular expressions.
 
-This recipe parser currently parses lists of ingredients, with optional sections, into a JSON object. For example, the following code
+The following code will parse a list of ingredients into a JSON object
 
 ```typescript
-const {recipe, errors} = toRecipe(`dough
+const text = `dough
         1 1/2 cp all-purpose flour
         1 tsp vanilla extract,
         sauce
         1 cup milk
         1 egg`
-)
+const {recipe, errors} = toRecipe(text, {inputType: ParseType.INGREDIENTS})
 ```
 
-will parse the specified ingredients and sections
-
-```text
-dough
-1 1/2 cp all-purpose flour
-1 tsp vanilla extract,
-sauce
-1 cup milk
-1 egg
-```
-
-into a JSON object
+...and the result...
 
 ```json
 {
@@ -73,54 +64,172 @@ into a JSON object
 }
 ```
 
-The code for the previous example is
+As a more complete example, we parse the text for a fake Piri-Piri chicken recipe.
 
 ```typescript
-it("should be parse a recipe into json", () => {
-    const input = `dough
-1 1/2 cp all-purpose flour
-1 tsp vanilla extract,
-sauce
-1 cup milk
-1 egg`
-
-    const {recipe, errors} = toRecipe(input)
-    expect(true).toBeTruthy()
+    it("should be able to parse the piri piri chicken recipe", () => {
+    const input = `Ingredients
+        Powder
+            1. 2 tbsp sugar
+            2) 1 tbsp paprika
+            1 tbsp coriander
+            1 tbsp cumin
+            1 1/2 tbsp salt
+            2 tbsps new mexico chile powder
+            Sauce
+            3 cloves garlic
+            8 fresno peppers
+            1/3 cup lemon juice
+            1/4 cup red wine vinegar
+            Chicken
+            1 whole chicken
+            Steps
+            Sauce
+            1. first step
+            2. second step
+            Chicken
+            3) third step
+            `
+    const {recipe, errors} = toRecipe(input, {deDupSections: true})
     expect(recipe).toEqual({
-        type: "ingredients",
+        type: "recipe",
         ingredients: [
-            {
-                amount: {quantity: 1.5, unit: UnitType.CUP},
-                ingredient: 'all-purpose flour',
-                section: 'dough'
-            },
-            {
-                amount: {quantity: 1, unit: UnitType.TEASPOON},
-                ingredient: 'vanilla extract',
-                section: 'dough'
-            },
-            {
-                amount: {quantity: 1, unit: UnitType.CUP},
-                ingredient: 'milk',
-                section: 'sauce'
-            },
-            {
-                amount: {quantity: 1, unit: UnitType.PIECE},
-                ingredient: 'egg',
-                section: 'sauce'
-            },
+            {amount: {quantity: 2, unit: UnitType.TABLESPOON}, ingredient: 'sugar', section: 'Powder', brand: null},
+            {amount: {quantity: 1, unit: UnitType.TABLESPOON}, ingredient: 'paprika', section: null, brand: null},
+            {amount: {quantity: 1, unit: UnitType.TABLESPOON}, ingredient: 'coriander', section: null, brand: null},
+            {amount: {quantity: 1, unit: UnitType.TABLESPOON}, ingredient: 'cumin', section: null, brand: null},
+            {amount: {quantity: 1.5, unit: UnitType.TABLESPOON}, ingredient: 'salt', section: null, brand: null},
+            {amount: {quantity: 2, unit: UnitType.TABLESPOON}, ingredient: 'new mexico chile powder', section: null, brand: null},
+
+            {amount: {quantity: 3, unit: UnitType.PIECE}, ingredient: 'cloves garlic', section: 'Sauce', brand: null},
+            {amount: {quantity: 8, unit: UnitType.PIECE}, ingredient: 'fresno peppers', section: null, brand: null},
+            {amount: {quantity: 0.3333333333333333, unit: UnitType.CUP}, ingredient: 'lemon juice', section: null, brand: null},
+            {amount: {quantity: 0.25, unit: UnitType.CUP}, ingredient: 'red wine vinegar', section: null, brand: null},
+
+            {amount: {quantity: 1, unit: UnitType.PIECE}, ingredient: 'whole chicken', section: 'Chicken', brand: null},
+        ],
+        steps: [
+            {id: "1.", step: "first step", title: "Sauce"},
+            {id: "2.", step: "second step", title: null},
+            {id: "3)", step: "third step", title: "Chicken"},
         ]
     })
-    expect(errors).toHaveLength(1)
-    expect(errors[0]).toEqual({
-        offset: 54,
-        line: 2,
-        column: 22,
-        length: 1,
-        message: "unexpected character: ->,<- at offset: 54, skipped 1 characters."
-    })
-    expect(input[54]).toBe(',')
+    expect(errors).toHaveLength(0)
 })
+
+```
+
+## usage
+
+To use the recipe parser, add the library to your project
+
+```shell
+npm install recipe-parser
+```
+
+Add an import to your module
+
+```typescript
+import {toRecipe} from "recipe-parser";
+```
+
+And then call the `toRecipe(...)` function with any options
+
+```typescript
+import {toRecipe} from "recipe-parser";
+import {ParseType} from "./RecipeParser";
+
+const myRecipe = "some recipe text"
+const {recipe, errors} = toRecipe(myRecipe, {deDupSections: true, inputType: ParseType.RECIPE})
+```
+
+If there are no errors, the recipe will be a JSON object of type `RecipeAst`
+
+```typescript
+type RecipeAst = {
+    type: string
+    ingredients: Array<IngredientItemType>
+    steps: Array<StepItemType>
+}
+
+// which depends on the following definitions
+type IngredientItemType = {
+    amount: AmountType
+    ingredient: string
+    section: string | null
+    brand: string | null
+}
+
+type StepItemType = {
+    id: string
+    title: string | null
+    step: string
+}
+
+type AmountType = {
+    quantity: number
+    unit: UnitType
+}
+
+enum UnitType {
+    MILLIGRAM = 'mg', GRAM = 'g', KILOGRAM = 'kg',
+    OUNCE = 'oz', POUND = 'lb',
+    MILLILITER = 'ml', LITER = 'l', TEASPOON = 'tsp', TABLESPOON = 'tbsp', FLUID_OUNCE = 'fl oz',
+    CUP = 'cup', PINT = 'pt', QUART = 'qt', GALLON = 'gal',
+    PIECE = 'piece', PINCH = 'pinch'
+}
+```
+
+
+```typescript
+/**
+ * Converts the text to a list of recipe ingredients with optional sections. This is the
+ * function to call to convert a test recipe into a recipe object.
+ * @param text The text to convert into a recipe object
+ * @param [options = defaultOptions] The options used for parsing the text into a
+ * recipe or recipe fragment.
+ * @return A recipe result holding the recipe object and any parsing errors
+ */
+function toRecipe(text: string, options: Options = defaultOptions): RecipeResult {/*...*/}
+```
+
+and the options are 
+
+```typescript
+export type Options = {
+    // When set to `true` only sets the section of the first ingredient of each
+    // section to current section.
+    deDupSections?: boolean
+    // When set to `true` then logs warning to the console, otherwise
+    // does not log warnings. Warning and errors are reported in the returned object
+    // in either case.
+    logWarnings?: boolean
+    // The thing that the input text represents: a whole recipe, a list of ingredients,
+    // or a list of steps.
+    inputType?: ParseType
+}
+```
+
+and the parse-type is defined as
+
+```typescript
+export enum ParseType {
+    RECIPE,
+    INGREDIENTS,
+    STEPS
+}
+```
+
+and the recipe result is defined as 
+
+```typescript
+/**
+ * The result of the lexing, parsing, and visiting.
+ */
+export type RecipeResult = {
+    recipe: RecipeAst,
+    errors: Array<ILexingError>
+}
 ```
 
 ## the grammar

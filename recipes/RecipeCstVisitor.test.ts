@@ -176,5 +176,6 @@ describe("when creating an ast", () => {
                 {id: "3)", step: "third step", title: "Chicken"},
             ]
         })
+        expect(errors).toHaveLength(0)
     })
 })
