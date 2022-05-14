@@ -1,6 +1,6 @@
 {
   "name": "@saucie/recipe-parser",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "description": "Recipe Parser",
   "author": "Rob Philipp",
   "homepage": "https://github.com/robphilipp/recipe-parser",
