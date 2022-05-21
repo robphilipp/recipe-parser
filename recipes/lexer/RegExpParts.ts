@@ -59,11 +59,12 @@ export function newRegexParts(): RegExpParts {
 }
 
 export const regexParts = newRegexParts()
-    .add("SectionHeader", /[\t\w ]+/.source)
+    .add("SectionHeader", /[\t\wA-Za-zÀ-ÖØ-öø-ÿ ]+/.source)
     .add("NewLine", /(\n|\r\n)/.source)
     .add("WhiteSpace", /\s+/.source)
     .add("NaturalNumberPart", /[1-9]\d*/.source)
     .add("IntegerPart", /0|[1-9]\d*/.source)
     .add("FractionalPart", /\.\d+/.source)
     .add("UnitsPart", /(fl oz)|(fluid ounce)|([a-zA-Z]+\.?)/.source)
-    .add("WordPart", /[\w.'/()\[\]{}-]+/.source)
+    .add("WordPart", /[\wA-Za-zÀ-ÖØ-öø-ÿ.'/()\[\]{}-]+/.source)
+    // .add("WordPart", /[\w.'/()\[\]{}-]+/.source)

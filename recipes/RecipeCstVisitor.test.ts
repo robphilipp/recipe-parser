@@ -178,4 +178,36 @@ describe("when creating an ast", () => {
         })
         expect(errors).toHaveLength(0)
     })
+    it("should be able to parse accents and character modifiers", () => {
+        const input = `Pöwder
+2 tbsps sugar
+1 tbsp paprika
+3 cloves garlic
+1 tbsp salt
+1 tbsp coriander
+1 tbsp cumin
+2 tbsps New Mexico Chile powder or CA Chile powder
+Sauce
+8 Fresno pepper or Jalapeño or red cherry peppers
+⅓ cup lemon juice
+Chicken
+¼ cup red wine vinegar
+1 whole chicken`
+
+        const {recipe, errors} = toRecipe(input, {inputType: ParseType.INGREDIENTS, deDupSections: true})
+        expect(errors).toHaveLength(0)
+        expect(recipe).toEqual([
+            {amount: {quantity: 2, unit: Unit.TABLESPOON}, ingredient: 'sugar', section: 'Pöwder', brand: null},
+            {amount: {quantity: 1, unit: Unit.TABLESPOON}, ingredient: 'paprika', section: null, brand: null},
+            {amount: {quantity: 3, unit: Unit.PIECE}, ingredient: 'cloves garlic', section: null, brand: null},
+            {amount: {quantity: 1, unit: Unit.TABLESPOON}, ingredient: 'salt', section: null, brand: null},
+            {amount: {quantity: 1, unit: Unit.TABLESPOON}, ingredient: 'coriander', section: null, brand: null},
+            {amount: {quantity: 1, unit: Unit.TABLESPOON}, ingredient: 'cumin', section: null, brand: null},
+            {amount: {quantity: 2, unit: Unit.TABLESPOON}, ingredient: 'New Mexico Chile powder or CA Chile powder', section: null, brand: null},
+            {amount: {quantity: 8, unit: Unit.PIECE}, ingredient: 'Fresno pepper or Jalapeño or red cherry peppers', section: 'Sauce', brand: null},
+            {amount: {quantity: 0.3333333333333333, unit: Unit.CUP}, ingredient: 'lemon juice', section: null, brand: null},
+            {amount: {quantity: 0.25, unit: Unit.CUP}, ingredient: 'red wine vinegar', section: 'Chicken', brand: null},
+            {amount: {quantity: 1, unit: Unit.PIECE}, ingredient: 'whole chicken', section: null, brand: null},
+        ])
+    })
 })
