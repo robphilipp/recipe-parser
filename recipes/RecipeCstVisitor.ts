@@ -7,7 +7,7 @@ import {lex} from "./lexer/RecipeLexer";
  * The result of the lexing, parsing, and visiting.
  */
 export type RecipeResult = {
-    recipe: Recipe,
+    recipe: Recipe | Array<Ingredient> | Array<Step>,
     errors: Array<ILexingError>
 }
 
@@ -322,6 +322,8 @@ export function toRecipe(text: string, options: Options = defaultOptions): Recip
     }
 
     const {cst, lexingResult} = parse(text)
+
+    const result = toAstVisitorInstance.visit(cst)
 
     return {
         recipe: toAstVisitorInstance.visit(cst),
