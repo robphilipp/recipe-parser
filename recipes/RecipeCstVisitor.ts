@@ -6,10 +6,14 @@ import {lex} from "./lexer/RecipeLexer";
 /**
  * The result of the lexing, parsing, and visiting.
  */
-export type RecipeResult = {
-    recipe: Recipe | Array<Ingredient> | Array<Step>,
+export type ConvertResult<R extends Recipe | Array<Ingredient> | Array<Step>> = {
+    result: R,
     errors: Array<ILexingError>
 }
+
+export type RecipeResult = ConvertResult<Recipe>
+export type IngredientsResult = ConvertResult<Array<Ingredient>>
+export type StepsResult = ConvertResult<Array<Step>>
 
 // a new parser instance that will hold the concrete syntax tree (CST) output (enabled by default)
 // when the parsing is complete
@@ -284,22 +288,26 @@ export type Options = {
 export const defaultOptions: Options = {
     deDupSections: false,
     logWarnings: false,
-    inputType: ParseType.RECIPE
+    // inputType: ParseType.RECIPE
 }
 
 /**
  * Converts the text to a list of recipe ingredients with optional sections. This is the
  * function to call to convert a test recipe into a recipe object.
  * @param text The text to convert into a recipe object
+ * @param [inputType = ParseType.RECIPE] The optional input type (i.e. ingredients, steps, recipe).
  * @param [options = defaultOptions] The options used for parsing the text into a
  * recipe or recipe fragment.
  * @return A recipe result holding the recipe object and any parsing errors
  */
-export function toRecipe(text: string, options: Options = defaultOptions): RecipeResult {
+export function convertText(
+    text: string,
+    inputType: ParseType = ParseType.RECIPE,
+    options: Options = defaultOptions
+): ConvertResult<Recipe | Array<Ingredient> | Array<Step>> {
     const {
         deDupSections = false,
         logWarnings = false,
-        inputType = ParseType.RECIPE
     } = options
 
     if (toAstVisitorInstance === undefined || toAstVisitorInstance.deDupSections !== deDupSections) {
@@ -323,10 +331,48 @@ export function toRecipe(text: string, options: Options = defaultOptions): Recip
 
     const {cst, lexingResult} = parse(text)
 
-    const result = toAstVisitorInstance.visit(cst)
-
     return {
-        recipe: toAstVisitorInstance.visit(cst),
+        result: toAstVisitorInstance.visit(cst),
         errors: lexingResult.errors
     }
+}
+
+/**
+ * Converts the text into a {@link Recipe} that holds an array of {@link Ingredient} and
+ * an array of {@link Step}.
+ * @param text The text to convert into a recipe object
+ * @param [options = defaultOptions] The options used for parsing the text into a
+ * recipe or recipe fragment.
+ * @return A {@link ConvertResult<Recipe>} holding the parsed text
+ * @see toIngredients
+ * @see toSteps
+ */
+export function toRecipe(text: string, options: Options = defaultOptions): RecipeResult {
+    return convertText(text, ParseType.RECIPE, options) as RecipeResult
+}
+
+/**
+ * Converts the text into an array of {@link Ingredient}
+ * @param text The text to convert into an array of ingredients
+ * @param [options = defaultOptions] The options used for parsing the text into a
+ * recipe or recipe fragment.
+ * @return A {@link ConvertResult<Recipe>} holding the parsed text
+ * @see toRecipe
+ * @see toSteps
+ */
+export function toIngredients(text: string, options: Options = defaultOptions): IngredientsResult {
+    return convertText(text, ParseType.INGREDIENTS, options) as IngredientsResult
+}
+
+/**
+ * Converts the text into an array of {@link Step}.
+ * @param text The text to convert into an array of steps
+ * @param [options = defaultOptions] The options used for parsing the text into a
+ * recipe or recipe fragment.
+ * @return A {@link ConvertResult<Recipe>} holding the parsed text
+ * @see toRecipe
+ * @see toIngredients
+ */
+export function toSteps(text: string, options: Options = defaultOptions): StepsResult {
+    return convertText(text, ParseType.STEPS, options) as StepsResult
 }
