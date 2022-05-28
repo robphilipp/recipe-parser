@@ -1,5 +1,11 @@
 # recipe-parser version history
 
+## version 1.0.0 (parsing functions renamed)
+
+1. The `toRecipe(...)` function has been renamed to `convertText(...)`, but I encourage you to use the new `toRecipe(..)`, `toIngredients(...)`, and the `toSteps(...)` functions instead.
+2. The `RecipeResult` type is now parameterized by the return type (i.e. `Recipe`, `Array<Ingredient>`, and `Array<Step>`), and the field `recipe` has been renamed to `result`.
+3. Added functions `toRecipe(..)`, `toIngredients(...)`, and the `toSteps(...)` that return a `RecipeResult<Recipe>`, `RecipeResult<Array<Ingredients>>` and a `RecipeResult<Array<Step>>`, respectively.
+
 ## version 0.1.2 (fixed typing in RecipeResult)
 
 Fixed the typing in the `RecipeResult` so that it is either a full `Recipe`, or when the

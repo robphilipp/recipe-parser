@@ -3,13 +3,16 @@ export {RecipeParser, RecipeParseResult, parse, ParseType} from "./recipes/Recip
 export {
     RecipeResult,
     RecipeCstVisitor,
-    toRecipe,
+    convertText,
     Options,
     defaultOptions,
     Recipe,
     Ingredient,
     Step,
-    Amount
+    Amount,
+    toRecipe,
+    toIngredients,
+    toSteps
 } from "./recipes/RecipeCstVisitor"
 
 export {Unit} from "./recipes/lexer/Units"
