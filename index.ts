@@ -1,7 +1,7 @@
 export {recipeTokens, recipeTokenVocabulary, lex} from "./recipes/lexer/RecipeLexer"
 export {RecipeParser, RecipeParseResult, parse, ParseType} from "./recipes/RecipeParser"
 export {
-    RecipeResult,
+    ConvertResult,
     RecipeCstVisitor,
     convertText,
     Options,
@@ -12,7 +12,9 @@ export {
     Amount,
     toRecipe,
     toIngredients,
-    toSteps
+    toSteps,
 } from "./recipes/RecipeCstVisitor"
+
+export type {RecipeResult, IngredientsResult, StepsResult} from "./recipes/RecipeCstVisitor"
 
 export {Unit} from "./recipes/lexer/Units"
