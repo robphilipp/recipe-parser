@@ -379,7 +379,7 @@ sauce
         /* STEPS - DOUGH */
         const stepsDough = stepSections[0] as CstNode
         expect(stepsDough.name).toBe("stepsSection")
-        expect(stepsDough.children.SectionHeader).toHaveLength(1)
+        expect(stepsDough.children.SectionHeaderInStep).toHaveLength(1)
         expect(stepsDough.children.stepItem).toHaveLength(2)
 
         const doughStepsItems = stepsDough.children.stepItem as Array<CstNode>

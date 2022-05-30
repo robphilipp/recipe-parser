@@ -121,27 +121,27 @@ const SectionHeaderInStep = createToken({
 /*
  | SECTIONS
  */
-const IngredientsSectionHeader = createToken({
-    name: "IngredientsSectionHeader",
-    pattern: matchIngredientsSection,
-    line_breaks: false,
-    // push_mode: "ingredients_mode",
-    longer_alt: SectionHeader
-})
-
-const StepsSectionHeader = createToken({
-    name: "StepsSectionHeader",
-    pattern: matchStepsSection,
-    line_breaks: false,
-    // push_mode: "steps_mode",
-    longer_alt: SectionHeaderInStep
-})
-
-const EnterRecipes = createToken({
-    name: "EnterRecipes",
-    // pattern: matchSection,
-    push_mode: "recipes_mode"
-})
+// const IngredientsSectionHeader = createToken({
+//     name: "IngredientsSectionHeader",
+//     pattern: matchIngredientsSection,
+//     line_breaks: false,
+//     // push_mode: "ingredients_mode",
+//     longer_alt: SectionHeader
+// })
+//
+// const StepsSectionHeader = createToken({
+//     name: "StepsSectionHeader",
+//     pattern: matchStepsSection,
+//     line_breaks: false,
+//     // push_mode: "steps_mode",
+//     longer_alt: SectionHeaderInStep
+// })
+//
+// const EnterRecipes = createToken({
+//     name: "EnterRecipes",
+//     // pattern: matchSection,
+//     push_mode: "recipes_mode"
+// })
 
 // const ExitRecipes = createToken({
 //     name: "ExitRecipes",
@@ -245,7 +245,7 @@ const stepTokenTypes = [
 const recipeTokens = {
     modes: {
         recipe_mode: recipeTokenTypes,
-        ingredients_mode: [EnterSteps, ...ingredientTokenTypes, ExitIngredients],// StepsSectionHeader],//, EnterSteps],
+        ingredients_mode: [EnterSteps, ...ingredientTokenTypes, ExitIngredients, SectionHeaderInStep],// StepsSectionHeader],//, EnterSteps],
         steps_mode: [EnterIngredients, ...stepTokenTypes, ExitSteps],//IngredientsSectionHeader], //EnterIngredients]
         // ingredients_mode: [...ingredientTokenTypes, ExitIngredients, EnterSteps],// StepsSectionHeader],//, EnterSteps],
         // steps_mode: [...stepTokenTypes, ExitSteps, EnterIngredients],//IngredientsSectionHeader], //EnterIngredients]
