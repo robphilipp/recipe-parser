@@ -1,10 +1,11 @@
-import {parse, ParseType} from "./RecipeParser";
+import {parse} from "./RecipeParser";
 import {CstNode, IToken} from "chevrotain";
 import {INGREDIENTS_HEADER, STEPS_HEADER} from "./lexer/matchers";
+import {ParseType} from "./ParseType";
 
 describe("when parsing a recipe", () => {
     it("should work", () => {
-        const {parserInstance, cst} = parse("1 1/2 cp all purpose flour", ParseType.INGREDIENTS)
+        const {parserInstance, cst} = parse("1 1/2 cp all purpose flour", {inputType: ParseType.INGREDIENTS})
 
         expect(true).toBeTruthy()
         expect(cst).toBeDefined()
@@ -46,7 +47,7 @@ describe("when parsing a recipe", () => {
     it("should work for multiple items", () => {
         const {parserInstance, cst} = parse(
             `1 1/2 cp all-purpose flour\n1 tsp vanilla extract`,
-            ParseType.INGREDIENTS
+            {inputType: ParseType.INGREDIENTS, gimmeANewParser: true, gimmeANewLexer: true}
         )
 
         expect(true).toBeTruthy()
@@ -59,7 +60,7 @@ describe("when parsing a recipe", () => {
     it("should work for multiple items and sections", () => {
         const {parserInstance, cst} = parse(
             `1 lb sugar#dough\n1 1/2 cp all-purpose flour\n1 tsp vanilla extract#sauce#\n1 cup milk`,
-            ParseType.INGREDIENTS
+            {inputType: ParseType.INGREDIENTS, gimmeANewParser: true, gimmeANewLexer: true}
         )
 
         expect(cst.name).toBe('ingredients')
@@ -159,7 +160,7 @@ dough me
 1 1/2 cp all-purpose flour
 1 tsp vanilla extract
 sauce
-1 cup milk`, ParseType.INGREDIENTS)
+1 cup milk`, {inputType: ParseType.INGREDIENTS, gimmeANewParser: true, gimmeANewLexer: true})
 
         expect(cst.name).toBe('ingredients')
         expect(cst.children).toBeDefined()
@@ -265,8 +266,7 @@ dough
 2. second step for the Dough
 sauce
 1) saucy first step is a tough one
-* saucy2 second step is easy`
-        )
+* saucy2 second step is easy`, {gimmeANewLexer: true, gimmeANewParser: true})
 
         expect(cst.name).toBe('sections')
         expect(cst.children).toBeDefined()

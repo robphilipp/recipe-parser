@@ -1,7 +1,7 @@
-import {ParseType, RecipeParser, RecipeParseResult, RuleName, StartRule} from "./RecipeParser";
+import {parse, RecipeParser} from "./RecipeParser";
 import {Unit} from "./lexer/Units";
 import {CstChildrenDictionary, CstNode, ILexingError, IToken} from "chevrotain";
-import {lex} from "./lexer/RecipeLexer";
+import {ParseType} from "./ParseType";
 
 /**
  * The result of the lexing, parsing, and visiting.
@@ -273,22 +273,26 @@ export type Amount = {
 let toAstVisitorInstance: RecipeCstVisitor
 
 export type Options = {
+    // The thing that the input text represents: a whole recipe, a list of ingredients,
+    // or a list of steps.
+    inputType?: ParseType
     // When set to `true` only sets the section of the first ingredient of each
     // section to current section.
     deDupSections?: boolean
     // When set to `true` then logs warning to the console, otherwise
     // does not log warnings. Warning and errors are reported in the returned object
     // in either case.
-    logWarnings?: boolean
-    // The thing that the input text represents: a whole recipe, a list of ingredients,
-    // or a list of steps.
-    inputType?: ParseType
+    logWarnings?: boolean,
+    gimmeANewLexer?: boolean
+    gimmeANewParser?: boolean
 }
 
 export const defaultOptions: Options = {
+    inputType: ParseType.RECIPE,
     deDupSections: false,
     logWarnings: false,
-    // inputType: ParseType.RECIPE
+    gimmeANewLexer: false,
+    gimmeANewParser: false
 }
 
 /**
@@ -302,34 +306,39 @@ export const defaultOptions: Options = {
  */
 export function convertText(
     text: string,
-    inputType: ParseType = ParseType.RECIPE,
+    // inputType: ParseType = ParseType.RECIPE,
     options: Options = defaultOptions
 ): ConvertResult<Recipe | Array<Ingredient> | Array<Step>> {
     const {
+        inputType = ParseType.RECIPE,
         deDupSections = false,
         logWarnings = false,
+        gimmeANewParser = false,
+        gimmeANewLexer = false
     } = options
 
     if (toAstVisitorInstance === undefined || toAstVisitorInstance.deDupSections !== deDupSections) {
         toAstVisitorInstance = new RecipeCstVisitor(deDupSections)
     }
 
-    function parse(input: string): RecipeParseResult {
-        const lexingResult = lex(input, ParseType.RECIPE, logWarnings)
+    // function parse(input: string): RecipeParseResult {
+    //     const lexingResult = lex(input, {inputType: ParseType.RECIPE, logWarnings})
+    //
+    //     if (parserInstance !== undefined) {
+    //         parserInstance.reset()
+    //     }
+    //     if (parserInstance === null) throw Error("Parser instance is null")
+    //     parserInstance.input = lexingResult.tokens
+    //
+    //     // start parsing at the specified rule
+    //     const cst = parserInstance[StartRule.get(inputType) || RuleName.SECTIONS]()
+    //
+    //     return {parserInstance, cst, lexingResult}
+    // }
+    //
+    // const {cst, lexingResult} = parse(text)
 
-        if (parserInstance !== undefined) {
-            parserInstance.reset()
-        }
-        if (parserInstance === null) throw Error("Parser instance is null")
-        parserInstance.input = lexingResult.tokens
-
-        // start parsing at the specified rule
-        const cst = parserInstance[StartRule.get(inputType) || RuleName.SECTIONS]()
-
-        return {parserInstance, cst, lexingResult}
-    }
-
-    const {cst, lexingResult} = parse(text)
+    const {cst, lexingResult} = parse(text, {inputType, logWarnings, gimmeANewLexer, gimmeANewParser})
 
     return {
         result: toAstVisitorInstance.visit(cst),
@@ -348,7 +357,7 @@ export function convertText(
  * @see toSteps
  */
 export function toRecipe(text: string, options: Options = defaultOptions): RecipeResult {
-    return convertText(text, ParseType.RECIPE, options) as RecipeResult
+    return convertText(text, {...options, inputType: ParseType.RECIPE}) as RecipeResult
 }
 
 /**
@@ -361,7 +370,7 @@ export function toRecipe(text: string, options: Options = defaultOptions): Recip
  * @see toSteps
  */
 export function toIngredients(text: string, options: Options = defaultOptions): IngredientsResult {
-    return convertText(text, ParseType.INGREDIENTS, options) as IngredientsResult
+    return convertText(text, {...options, inputType: ParseType.INGREDIENTS}) as IngredientsResult
 }
 
 /**
@@ -374,5 +383,5 @@ export function toIngredients(text: string, options: Options = defaultOptions): 
  * @see toIngredients
  */
 export function toSteps(text: string, options: Options = defaultOptions): StepsResult {
-    return convertText(text, ParseType.STEPS, options) as StepsResult
+    return convertText(text, {...options, inputType: ParseType.STEPS}) as StepsResult
 }

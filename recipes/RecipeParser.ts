@@ -1,5 +1,6 @@
 import {CstNode, CstParser, ILexingResult} from "chevrotain";
 import {lex, recipeTokenVocabulary} from "./lexer/RecipeLexer";
+import {ParseType} from "./ParseType";
 
 // const {
 //     ListItemId,
@@ -103,7 +104,7 @@ export class RecipeParser extends CstParser {
             DEF: () => {
                 this.OR([
                     {
-                        GATE: () => this.LA(1).tokenType === recipeTokenVocabulary.SectionHeader,
+                        GATE: () => this.LA(1).tokenType === recipeTokenVocabulary.SectionHeaderInStep,
                         ALT: () => this.SUBRULE(this.stepsSection)
                     },
                     {
@@ -176,21 +177,22 @@ export class RecipeParser extends CstParser {
 
     // the step instructions
     step = this.RULE(RuleName.STEP, () => {
-        this.AT_LEAST_ONE({
-            DEF: () => {
-                this.OR([
-                    {ALT: () => this.CONSUME(recipeTokenVocabulary.Word)},
-                    {ALT: () => this.CONSUME(recipeTokenVocabulary.Amount)},
-                    {ALT: () => this.CONSUME(recipeTokenVocabulary.Integer)},
-                    {ALT: () => this.CONSUME(recipeTokenVocabulary.Decimal)},
-                    {ALT: () => this.CONSUME(recipeTokenVocabulary.Fraction)},
-                    {ALT: () => this.CONSUME(recipeTokenVocabulary.UnicodeFraction)},
-                    {ALT: () => this.CONSUME(recipeTokenVocabulary.WholeFraction)},
-                    {ALT: () => this.CONSUME(recipeTokenVocabulary.Quantity)},
-                    {ALT: () => this.CONSUME(recipeTokenVocabulary.Unit)},
-                ])
-            }
-        })
+        // this.AT_LEAST_ONE({
+        //     DEF: () => {
+        //         this.OR([
+        //             {ALT: () => this.CONSUME(recipeTokenVocabulary.Word)},
+        //             {ALT: () => this.CONSUME(recipeTokenVocabulary.Amount)},
+        //             {ALT: () => this.CONSUME(recipeTokenVocabulary.Integer)},
+        //             {ALT: () => this.CONSUME(recipeTokenVocabulary.Decimal)},
+        //             {ALT: () => this.CONSUME(recipeTokenVocabulary.Fraction)},
+        //             {ALT: () => this.CONSUME(recipeTokenVocabulary.UnicodeFraction)},
+        //             {ALT: () => this.CONSUME(recipeTokenVocabulary.WholeFraction)},
+        //             {ALT: () => this.CONSUME(recipeTokenVocabulary.Quantity)},
+        //             {ALT: () => this.CONSUME(recipeTokenVocabulary.Unit)},
+        //         ])
+        //     }
+        // })
+        this.CONSUME(recipeTokenVocabulary.Step)
     })
 }
 
@@ -202,35 +204,52 @@ export type RecipeParseResult = {
     lexingResult: ILexingResult
 }
 
-export enum ParseType {
-    RECIPE,
-    INGREDIENTS,
-    STEPS
-}
-
 export const StartRule = new Map<ParseType, RuleName>([
     [ParseType.RECIPE, RuleName.SECTIONS],
     [ParseType.INGREDIENTS, RuleName.INGREDIENTS],
     [ParseType.STEPS, RuleName.STEPS]
 ])
 
+export type ParserOptions = {
+    // Whether to parser as a recipe (ingredients and steps), a list of ingredients,
+    // or a list of steps. Specifies the parser start rule.
+    inputType?: ParseType
+    logWarnings?: boolean
+    gimmeANewParser?: boolean
+    gimmeANewLexer?: boolean
+}
+
+const defaultOptions: ParserOptions = {
+    inputType: ParseType.RECIPE,
+    logWarnings: false,
+    gimmeANewParser: false,
+    gimmeANewLexer: false
+}
+
 /**
  * Parses the recipe text (input) into a parse result that holds the concrete syntax tree (CST),
  * the parser instance, and the lexing results.
  * @param input The input text to be parsed
- * @param inputType Whether to parser as a recipe (ingredients and steps), a list of ingredients,
- * or a list of steps. Specifies the parser start rule.
+ * @param [options = defaultOptions] The parsing options that determine where the parser starts, and whether
+ * this call creates a new parser and/or a new lexer
  * @return a parse result that holds the concrete syntax tree (CST), the parser instance, and
  * the lexing results.
  */
-export function parse(input: string, inputType: ParseType = ParseType.RECIPE): RecipeParseResult {
-    if (parserInstance === undefined) {
+export function parse(input: string, options: ParserOptions = defaultOptions): RecipeParseResult {
+    const {
+        inputType = ParseType.RECIPE,
+        logWarnings = false,
+        gimmeANewParser = false,
+        gimmeANewLexer = false
+    } = options
+
+    if (parserInstance === undefined || gimmeANewParser) {
         parserInstance = new RecipeParser()
     } else {
         parserInstance.reset()
     }
 
-    const lexingResult = lex(input, inputType, false)
+    const lexingResult = lex(input, {inputType, logWarnings, gimmeANewLexer})
     parserInstance.input = lexingResult.tokens
 
     const cst = parserInstance[StartRule.get(inputType) || RuleName.SECTIONS]()

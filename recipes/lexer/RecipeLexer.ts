@@ -5,13 +5,13 @@ import {
     matchFraction,
     matchIngredientsSection,
     matchListItemId,
-    matchQuantity,
-    matchSection,
+    matchQuantity, matchSection,
+    matchSectionIngredients,
     matchStepsSection,
     matchUnicodeFraction,
     unitMatcher
 } from "./matchers";
-import {ParseType} from "../RecipeParser";
+import {ParseType} from "../ParseType";
 
 /*
  | NUMBERS
@@ -66,6 +66,12 @@ const Word = createToken({
     name: "Word",
     pattern: regexParts.regex("{{WordPart}}")
 })
+const Step = createToken({
+    name: "Step",
+    pattern: regexParts.regex("(({{IntegerPart}}[ \t]+)|{{IntegerPart}}{{FractionalPart}}|{{RangePart}}|{{IntegerPart}}/{{NaturalNumberPart}}|{{StepPart}})+"),
+    // pattern: regexParts.regex("{{StepPart}}"),
+    line_breaks: false
+})
 const WhiteSpace = createToken({
     name: "WhiteSpace",
     pattern: regexParts.regex("{{WhiteSpace}}"),
@@ -83,10 +89,24 @@ const ListItemId = createToken({
     longer_alt: Decimal,
     line_breaks: false
 })
+const StepListItemId = createToken({
+    name: "ListItemId",
+    // pattern: /(\(?\d+((.\))|[.):]))|[*•-]\w*/,
+    pattern: matchListItemId,
+    longer_alt: Step,
+    // longer_alt: Decimal,
+    line_breaks: false
+})
 const SectionHeader = createToken({
     name: "SectionHeader",
-    pattern: matchSection,
+    pattern: matchSectionIngredients,
     longer_alt: Word,
+    line_breaks: false
+})
+const SectionHeaderInStep = createToken({
+    name: "SectionHeader",
+    pattern: matchSection,
+    longer_alt: Step,
     line_breaks: false
 })
 
@@ -202,15 +222,23 @@ const ingredientTokenTypes = [
 const stepTokenTypes = [
     NewLine,
     WhiteSpace,
-    ListItemId,
-    Amount, Quantity, WholeFraction, UnicodeFraction, Fraction, Decimal, Integer,
-    Unit,
-    // IngredientsSectionHeader,
-    // StepsSectionHeader,
-    SectionHeader,
-    // ExitSteps,
-    // EnterIngredients,
-    Word,
+    StepListItemId,
+    // ListItemId,
+    // Amount,
+    // Quantity, WholeFraction, UnicodeFraction, Fraction, Decimal, Integer,
+    // Unit,
+    SectionHeaderInStep,
+    Step,
+    // Word,
+    // Decimal, Integer, UnicodeFraction,
+
+    // NewLine,
+    // WhiteSpace,
+    // ListItemId,
+    // Amount, Quantity, WholeFraction, UnicodeFraction, Fraction, Decimal, Integer,
+    // Unit,
+    // SectionHeader,
+    // Word,
 ]
 
 const recipeTokens = {
@@ -269,21 +297,34 @@ export const recipeTokenVocabulary = Object
 
 let recipeLexer: Lexer
 
+export type LexerOptions = {
+    inputType?: ParseType,
+    logWarnings?: boolean,
+    gimmeANewLexer?: boolean
+}
+
+const defaultOptions: LexerOptions = {
+    inputType: ParseType.RECIPE,
+    logWarnings: false,
+    gimmeANewLexer: false
+}
+
 /**
  * Converts the input text into a lexing result that can be parsed into an AST or CST.
  * @param input The input string
- * @param [inputType = ParseType.RECIPE] Optional parameter that defines what is being lexed; a whole recipe,
- * just a list of ingredients, or just a list of steps.
- * does not log warnings. Warning and errors are reported in the returned object in either case.
- * @param [logWarnings = false] When set to `true` then logs warning to the console, otherwise
+ * @param [options = defaultOptions] Options for lexing the text
  * @return The {@link ILexingResult} object holding the result of the lexing operation
  */
 export function lex(
     input: string,
-    inputType: ParseType = ParseType.RECIPE,
-    logWarnings: boolean = false,
-    gimmeANewLexer: boolean = false
+    options: LexerOptions = defaultOptions
 ): ILexingResult {
+    const {
+        inputType = ParseType.RECIPE,
+        logWarnings = false,
+        gimmeANewLexer = false
+    } = options
+
     if (recipeLexer === undefined || gimmeANewLexer) {
         recipeLexer = new Lexer(recipeTokensFor(inputType))
     }
