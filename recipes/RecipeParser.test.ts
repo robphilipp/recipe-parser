@@ -267,12 +267,6 @@ sauce
 1) saucy first step is a tough one
 * saucy2 second step is easy`
         )
-//         const {parserInstance, cst} = parse(`dough me
-// 1 1/2 cp all-purpose flour
-// 1 tsp vanilla extract
-// sauce
-// 1 cup milk`
-//         )
 
         expect(cst.name).toBe('sections')
         expect(cst.children).toBeDefined()
@@ -424,9 +418,33 @@ sauce
         const sauceStepTwo = sauceStepsItems[1] as CstNode
         expect((sauceStepTwo.children.listItemId[0] as CstNode).name).toBe("listItemId")
         const sauceStepTwoListItem = sauceStepTwo.children.listItemId[0] as CstNode
-        expect((sauceStepTwoListItem.children.ListItemId[0] as IToken).image).toBe("*")
+        expect((sauceStepTwoListItem.children.ListItemId[0] as IToken).image).toBe("* ")
+        expect((sauceStepTwoListItem.children.ListItemId[0] as IToken).payload.id).toBe("*")
 
         const sauceStepTwoStepItem = (sauceStepTwo.children.step[0] as CstNode).children.Word as Array<IToken>
         expect(sauceStepTwoStepItem.map(tkn => tkn.image).join(" ")).toBe("saucy2 second step is easy")
+    })
+    it("should be able to parse steps with punctuation", () => {
+        const input = `Steps
+Spice rub
+1. 1 tbsp ground coriander
+2. 1.25 tbsp ground sweet paprika
+3. 1 tbsp ground cumin
+4. 1.5 tbsp salt
+5. 2 tbsp of New Mexico Chile powder or Chile powder of your choice
+6. Mix together and table out 2 tablespoon of spice for rubbing then put the rest into food processor
+Sauce
+7. Spice rub powder, Fresno pepper (keep some seeds to adjust the spiciness you like)
+8. add 3 cloves of garlic  and 2 tbsp of sugar then pause with food processor until the sauce is chopped
+9. Pour 1/4 cup red wine and 1/3 cup lemon juice into the food processor then pulse the sauce.
+Instructions
+10. Reserve 1/4 cup of sauce with juice and brush sauce on the chicken skin. Marinate on the chicken for 45 mins.
+11. Put on a tray with salt on bottom and rack on top put chicken on the rack.
+12. Set oven at 425 degree F and roast for 45-50 mins. Then take out the chicken and brush with 2 tbsp of another layer of pepper sauce. Put back into oven for another 10-15 mins. Then take the chicken out and rest/cool for 10 mins.
+13. Add 1 cup cilantro with leaves and stems to the sauce then put one last brushing on the chicken. Ready to serve
+`
+        const {parserInstance, cst} = parse(input)
+
+        expect(cst.name).toBe("sections")
     })
 })

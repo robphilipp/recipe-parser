@@ -1,7 +1,21 @@
 import {CstNode, CstParser, ILexingResult} from "chevrotain";
 import {lex, recipeTokenVocabulary} from "./lexer/RecipeLexer";
 
-const {ListItemId, Amount, Word, SectionHeader, IngredientsSectionHeader, StepsSectionHeader} = recipeTokenVocabulary
+const {
+    ListItemId,
+    Amount,
+    Integer,
+    Decimal,
+    Fraction,
+    UnicodeFraction,
+    WholeFraction,
+    Quantity,
+    Unit,
+    Word,
+    SectionHeader,
+    IngredientsSectionHeader,
+    StepsSectionHeader
+} = recipeTokenVocabulary
 
 export enum RuleName {
     SECTIONS = "sections",
@@ -19,6 +33,7 @@ export enum RuleName {
 
     LIST_ITEM_ID = "listItemId"
 }
+
 /**
  * Constructs a concrete syntax tree that holds the [ingredients] element as root. The [ingredients]
  * can have children of type [ingredient-items] or [section]. The [section] has [ingredient-item] as
@@ -162,7 +177,19 @@ export class RecipeParser extends CstParser {
     // the step instructions
     step = this.RULE(RuleName.STEP, () => {
         this.AT_LEAST_ONE({
-            DEF: () => this.CONSUME(Word)
+            DEF: () => {
+                this.OR([
+                    {ALT: () => this.CONSUME(Word)},
+                    {ALT: () => this.CONSUME(Amount)},
+                    {ALT: () => this.CONSUME(Integer)},
+                    {ALT: () => this.CONSUME(Decimal)},
+                    {ALT: () => this.CONSUME(Fraction)},
+                    {ALT: () => this.CONSUME(UnicodeFraction)},
+                    {ALT: () => this.CONSUME(WholeFraction)},
+                    {ALT: () => this.CONSUME(Quantity)},
+                    {ALT: () => this.CONSUME(Unit)},
+                ])
+            }
         })
     })
 }

@@ -325,6 +325,20 @@ export function matchSection(text: string, startOffset: number): CustomPatternMa
     return null
 }
 
+export function matchListItemId(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+    // if (amountMatcher(text, startOffset) !== null) return null
+
+    const match = /^(\(?\d+((\.\))|[.):]))|^[*•-](?:[ \t]+)/.exec(text.slice(startOffset))
+    if (match !== null) {
+        const result: CustomPatternMatcherReturn = [match[0]]
+        result.payload = {
+            id: match[0]
+                .replace(/[ \t]*/g, '')
+        }
+        return result
+    }
+    return null
+}
 
 /**
  * Determines whether there are just has leading spaces or tabs after the newline

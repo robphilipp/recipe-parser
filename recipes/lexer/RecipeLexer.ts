@@ -3,7 +3,7 @@ import {regexParts} from "./RegExpParts";
 import {
     amountMatcher,
     matchFraction,
-    matchIngredientsSection,
+    matchIngredientsSection, matchListItemId,
     matchQuantity,
     matchSection,
     matchStepsSection,
@@ -76,8 +76,10 @@ const NewLine = createToken({
 })
 const ListItemId = createToken({
     name: "ListItemId",
-    pattern: /(\(?\d+((.\))|[.):]))|[*•-]\w*/,
+    // pattern: /(\(?\d+((.\))|[.):]))|[*•-]\w*/,
+    pattern: matchListItemId,
     longer_alt: Decimal,
+    line_breaks: false
 })
 const SectionHeader = createToken({
     name: "SectionHeader",
@@ -85,6 +87,14 @@ const SectionHeader = createToken({
     longer_alt: Word,
     line_breaks: false
 })
+
+// const Punctuation = createToken({
+//     name: "Punctuation",
+//     pattern: regexParts.regex("{{Punctuation}}"),
+//     longer_alt: ListItemId,
+//     line_breaks: false,
+//     group: Lexer.SKIPPED
+// })
 
 /*
  | SECTIONS

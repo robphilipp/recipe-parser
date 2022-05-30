@@ -63,6 +63,21 @@ describe("when using the recipe lexer for ingredients", () => {
         expect(result.tokens.map(token => token.image))
             .toEqual(["1)", "1/2 cup", "all", "purpose", "flour"])
     })
+    it("should be able to tokenize an ingredient with -50)", () => {
+        const result = lex("-50 1/2 cup all purpose flour")
+        expect(result.tokens.map(token => token.image))
+            .toEqual(["-50", "1/2 cup", "all", "purpose", "flour"])
+        expect(result.tokens.map(token => token.tokenType.name))
+            .toEqual(["Word", "Amount", "Word", "Word", "Word"])
+    })
+    it("should be able to tokenize an ingredient with - 50)", () => {
+        const result = lex("- 50 1/2 cup all purpose flour")
+        expect(result.tokens.map(token => token.image))
+            .toEqual(["- ", "50 1/2 cup", "all", "purpose", "flour"])
+        expect(result.tokens[0].payload.id).toEqual("-")
+        expect(result.tokens.map(token => token.tokenType.name))
+            .toEqual(["ListItemId", "Amount", "Word", "Word", "Word"])
+    })
     it("should be able to tokenize an ingredient with 1.", () => {
         const result = lex("1. 1/2 cup all purpose flour")
         expect(result.tokens.map(token => token.image))
@@ -91,22 +106,27 @@ describe("when using the recipe lexer for ingredients", () => {
     it("should be able to tokenize an ingredient with *", () => {
         const result = lex("* 1/2 cup all purpose flour")
         expect(result.tokens.map(token => token.image))
-            .toEqual(["*", "1/2 cup", "all", "purpose", "flour"])
+            .toEqual(["* ", "1/2 cup", "all", "purpose", "flour"])
+        expect(result.tokens[0].payload.id).toEqual("*")
     })
     it("should be able to tokenize an ingredient with •", () => {
         const result = lex(" •    1/2 cup all purpose flour")
         expect(result.tokens.map(token => token.image))
-            .toEqual(["•", "1/2 cup", "all", "purpose", "flour"])
+            .toEqual(["•    ", "1/2 cup", "all", "purpose", "flour"])
     })
     it("should be able to tokenize an ingredient with -", () => {
         const result = lex("- 1/2 cup all purpose flour")
         expect(result.tokens.map(token => token.image))
-            .toEqual(["-", "1/2 cup", "all", "purpose", "flour"])
+            .toEqual(["- ", "1/2 cup", "all", "purpose", "flour"])
+        expect(result.tokens[0].payload.id).toEqual("-")
+        expect(result.tokens.map((token => token.tokenType.name)))
+            .toEqual(["ListItemId", "Amount", "Word", "Word", "Word"])
     })
     it("should be able to tokenize an ingredient with slang and list", () => {
         const result = lex("- a couple pinches all purpose flour")
         expect(result.tokens.map(token => token.image))
-            .toEqual(["-", "a couple pinches", "all", "purpose", "flour"])
+            .toEqual(["- ", "a couple pinches", "all", "purpose", "flour"])
+        expect(result.tokens[0].payload.id).toEqual("-")
         expect(result.tokens[1].payload).toEqual({quantity: [2, 1], unit: 'pinch'})
     })
     it("should be able to tokenize an ingredient with slang no list", () => {
@@ -147,7 +167,7 @@ describe("when using the recipe lexer for section headers", () => {
     it("should be able to lex a section header and several ingredients", () => {
         const result = lex(`#Section Header#\n- 1/2 cup all purpose flour\n1 ¼ cup whole milk`)
         expect(result.tokens.map(token => token.image))
-            .toEqual(['#Section Header#', "-", "1/2 cup", "all", "purpose", "flour", "1 ¼ cup", "whole", "milk"])
+            .toEqual(['#Section Header#', "- ", "1/2 cup", "all", "purpose", "flour", "1 ¼ cup", "whole", "milk"])
         expect(result.tokens[2].payload).toEqual({quantity: [1, 2], unit: 'cup'})
         expect(result.tokens[6].payload).toEqual({quantity: [5, 4], unit: 'cup'})
     })
@@ -174,6 +194,84 @@ describe("when using the recipe lexer for section headers", () => {
         ])
         expect(tokens.map(tkn => tkn.tokenType.name)).toEqual([
             "Amount", "Word", "SectionHeader", "Amount", "Word", "Word", "Amount", "Word", "Word", "SectionHeader", "Amount", "Word"
+        ])
+    })
+    it("should be able to lex multi-line set of steps with section and newline headers", () => {
+        const {tokens} = lex(`Steps
+Spice rub
+1. 1 tbsp ground coriander
+2. 1.25 tbsp ground sweet paprika
+3. 1 tbsp ground cumin
+4. 1.5 tbsp salt
+5. 2 tbsp of New Mexico Chile powder; or Chile powder of your choice
+6. Mix together and table out 2 tablespoon of spice for rubbing then put the rest into food processor
+Sauce
+7. Spice rub powder, Fresno pepper (keep some seeds to adjust the spiciness you like)
+8. add 3 cloves of garlic  and 2 tbsp of sugar then pause with food processor until the sauce is chopped
+9. Pour 1/4 cup red wine and 1/3 cup lemon juice into the food processor then pulse the sauce.
+Instructions
+10. Reserve 1/4 cup of sauce with juice and brush sauce on the chicken skin. Marinate on the chicken for 45 mins.
+11. Put on a tray with salt on bottom and rack on top put chicken on the rack.
+12. Set oven at 425 degree F and roast for 45-50 mins. Then take out the chicken and brush with 2 tbsp of another layer of pepper sauce. Put back into oven for another 10-15 mins. Then take the chicken out and rest/cool for 10 mins.
+13. Add 1 cup cilantro with leaves and stems to the sauce then put one last brushing on the chicken. Ready to serve
+`)
+        expect(tokens.map(tkn => tkn.image)).toEqual([
+            "Steps\n",
+            "Spice rub\n",
+            "1.","1 tbsp","ground","coriander",
+            "2.","1.25","tbsp","ground","sweet","paprika",
+            "3.","1 tbsp","ground","cumin",
+            "4.","1.5","tbsp","salt",
+            "5.","2 tbsp","of","New","Mexico","Chile","powder","or","Chile","powder","of","your","choice",
+            "6.","Mix","together","and","table","out","2 tablespoon","of","spice","for","rubbing","then",
+            "put","the","rest","into","food","processor",
+            "Sauce\n",
+            "7.","Spice","rub","powder","Fresno","pepper","(keep","some","seeds","to","adjust","the",
+            "spiciness","you","like)",
+            "8.","add","3","cloves","of","garlic","and","2 tbsp","of","sugar","then","pause","with","food",
+            "processor","until","the","sauce","is","chopped",
+            "9.","Pour","1/4 cup","red","wine","and","1/3 cup","lemon","juice","into","the","food","processor",
+            "then","pulse","the","sauce.",
+            "Instructions\n",
+            "10.","Reserve","1/4 cup","of","sauce","with","juice","and","brush","sauce","on","the","chicken",
+            "skin.","Marinate","on","the","chicken","for","45","mins.",
+            "11.","Put","on","a","tray","with","salt","on","bottom","and","rack","on","top","put","chicken",
+            "on","the","rack.",
+            "12.","Set","oven","at","425","degree","F","and","roast","for","45","-50","mins.","Then","take","out",
+            "the","chicken","and","brush","with","2 tbsp","of","another","layer","of","pepper","sauce.","Put",
+            "back","into","oven","for","another","10","-15","mins.","Then","take","the","chicken","out","and",
+            "rest/cool","for","10","mins.",
+            "13.","Add","1 cup","cilantro","with","leaves","and","stems","to","the","sauce","then","put","one",
+            "last","brushing","on","the","chicken.","Ready","to","serve"
+        ])
+        expect(tokens.map(tkn => tkn.tokenType.name)).toEqual([
+            "StepsSectionHeader",
+            "SectionHeader",
+            "ListItemId","Amount","Word","Word",
+            "ListItemId","Decimal","Unit","Word","Word","Word",
+            "ListItemId","Amount","Word","Word",
+            "ListItemId","Decimal","Unit","Word",
+            "ListItemId","Amount","Word","Word","Word","Word","Word","Word","Word","Word","Word","Word","Word",
+            "ListItemId","Word","Word","Word","Word","Word","Amount","Word","Word","Word","Word","Word","Word",
+            "Word","Word","Word","Word","Word",
+            "SectionHeader",
+            "ListItemId","Word","Word","Word","Word","Word","Word","Word","Word","Word","Word","Word","Word",
+            "Word","Word",
+            "ListItemId","Word","Amount","Word","Word","Word","Word","Amount","Word","Word","Word","Word","Word",
+            "Word","Word","Word","Word","Word","Word","Word",
+            "ListItemId","Word","Amount","Word","Word","Word","Amount","Word","Word","Word","Word","Word","Word",
+            "Word","Word","Word","Word",
+            "StepsSectionHeader",
+            "ListItemId","Word","Amount","Word","Word","Word","Word","Word","Word","Word","Word","Word","Word",
+            "Word","Word","Word","Word","Word","Word","Amount","Word",
+            "ListItemId","Word","Word","Word","Word","Word","Word","Word","Word","Word","Word","Word","Word",
+            "Word","Word","Word","Word","Word",
+            "ListItemId","Word","Word","Word","Amount","Word","Word","Word","Word","Word","Amount",
+            "Word","Word","Word","Word","Word","Word","Word","Word","Word","Word","Amount","Word","Word",
+            "Word","Word","Word","Word","Word","Word","Word","Word","Word","Word","Amount",
+            "Word","Word","Word","Word","Word","Word","Word","Word","Word","Word","Amount","Word",
+            "ListItemId","Word","Amount","Word","Word","Word","Word","Word","Word","Word","Word","Word","Word",
+            "Word","Word","Word","Word","Word","Word","Word","Word","Word"
         ])
     })
 })
