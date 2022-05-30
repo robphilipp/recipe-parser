@@ -85,12 +85,20 @@ export class RecipeParser extends CstParser {
             DEF: () => {
                 this.OR([
                     {
-                        GATE: () => this.LA(1).tokenType === recipeTokenVocabulary.SectionHeader,
-                        ALT: () => this.SUBRULE(this.ingredientsSection)
-
+                        GATE: () => {
+                            console.log("ingredients::ingredientSectionHeader")
+                            return this.LA(1).tokenType === recipeTokenVocabulary.SectionHeader
+                        },
+                        ALT: () => {
+                            console.log("ingredients::ingredientSection")
+                            return this.SUBRULE(this.ingredientsSection)
+                        }
                     },
                     {
-                        ALT: () => this.SUBRULE(this.ingredientItem)
+                        ALT: () => {
+                            console.log("ingredients::ingredientItem")
+                            this.SUBRULE(this.ingredientItem)
+                        }
                     }
                 ])
             }
@@ -120,8 +128,10 @@ export class RecipeParser extends CstParser {
     // header is encountered.
     ingredientsSection = this.RULE(RuleName.INGREDIENTS_SECTION, () => {
         this.CONSUME(recipeTokenVocabulary.SectionHeader)
+        console.log("ingredientsSection consumed header")
         this.AT_LEAST_ONE({
             DEF: () => {
+                console.log("ingredientsSection::ingredientItem")
                 this.SUBRULE(this.ingredientItem)
             }
         })
@@ -131,7 +141,7 @@ export class RecipeParser extends CstParser {
     // want the section to be the parent node to the steps that follow, until a new section
     // header is encountered.
     stepsSection = this.RULE(RuleName.STEPS_SECTION, () => {
-        this.CONSUME(recipeTokenVocabulary.SectionHeader)
+        this.CONSUME(recipeTokenVocabulary.SectionHeaderInStep)
         this.AT_LEAST_ONE({
             DEF: () => {
                 this.SUBRULE(this.stepItem)
@@ -206,6 +216,8 @@ export type RecipeParseResult = {
 
 export const StartRule = new Map<ParseType, RuleName>([
     [ParseType.RECIPE, RuleName.SECTIONS],
+    // [ParseType.INGREDIENTS, RuleName.INGREDIENTS_SECTION],
+    // [ParseType.STEPS, RuleName.STEPS_SECTION]
     [ParseType.INGREDIENTS, RuleName.INGREDIENTS],
     [ParseType.STEPS, RuleName.STEPS]
 ])

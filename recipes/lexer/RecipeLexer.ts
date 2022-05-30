@@ -104,7 +104,7 @@ const SectionHeader = createToken({
     line_breaks: false
 })
 const SectionHeaderInStep = createToken({
-    name: "SectionHeader",
+    name: "SectionHeaderInStep",
     pattern: matchSection,
     longer_alt: Step,
     line_breaks: false
@@ -134,7 +134,7 @@ const StepsSectionHeader = createToken({
     pattern: matchStepsSection,
     line_breaks: false,
     // push_mode: "steps_mode",
-    longer_alt: SectionHeader
+    longer_alt: SectionHeaderInStep
 })
 
 const EnterRecipes = createToken({
@@ -181,7 +181,7 @@ const EnterSteps = createToken({
     pattern: matchStepsSection,
     line_breaks: false,
     push_mode: "steps_mode",
-    longer_alt: SectionHeader
+    longer_alt: SectionHeaderInStep
 })
 
 
@@ -202,7 +202,8 @@ const recipeTokenTypes = [
     // StepsSectionHeader,
     EnterIngredients,
     EnterSteps,
-    SectionHeader
+    SectionHeader,
+    SectionHeaderInStep
 ]
 
 const ingredientTokenTypes = [

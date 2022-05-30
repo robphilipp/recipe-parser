@@ -59,6 +59,7 @@ describe("when parsing a recipe", () => {
     })
     it("should work for multiple items and sections", () => {
         const {parserInstance, cst} = parse(
+            // `1 lb sugar\n1 1/2 cp all-purpose flour\n1 tsp vanilla extract#sauce#\n1 cup milk`,
             `1 lb sugar#dough\n1 1/2 cp all-purpose flour\n1 tsp vanilla extract#sauce#\n1 cup milk`,
             {inputType: ParseType.INGREDIENTS, gimmeANewParser: true, gimmeANewLexer: true}
         )
