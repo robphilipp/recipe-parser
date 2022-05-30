@@ -315,7 +315,7 @@ export function convertText(
     }
 
     function parse(input: string): RecipeParseResult {
-        const lexingResult = lex(input, logWarnings)
+        const lexingResult = lex(input, ParseType.RECIPE, logWarnings)
 
         if (parserInstance !== undefined) {
             parserInstance.reset()

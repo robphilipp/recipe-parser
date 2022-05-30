@@ -1,15 +1,17 @@
-import {createToken, ILexingResult, Lexer, TokenType} from 'chevrotain'
+import {createToken, ILexingResult, IMultiModeLexerDefinition, Lexer, TokenType} from 'chevrotain'
 import {regexParts} from "./RegExpParts";
 import {
     amountMatcher,
     matchFraction,
-    matchIngredientsSection, matchListItemId,
+    matchIngredientsSection,
+    matchListItemId,
     matchQuantity,
     matchSection,
     matchStepsSection,
     matchUnicodeFraction,
     unitMatcher
 } from "./matchers";
+import {ParseType} from "../RecipeParser";
 
 /*
  | NUMBERS
@@ -103,6 +105,7 @@ const IngredientsSectionHeader = createToken({
     name: "IngredientsSectionHeader",
     pattern: matchIngredientsSection,
     line_breaks: false,
+    // push_mode: "ingredients_mode",
     longer_alt: SectionHeader
 })
 
@@ -110,28 +113,158 @@ const StepsSectionHeader = createToken({
     name: "StepsSectionHeader",
     pattern: matchStepsSection,
     line_breaks: false,
+    // push_mode: "steps_mode",
     longer_alt: SectionHeader
+})
+
+const EnterRecipes = createToken({
+    name: "EnterRecipes",
+    // pattern: matchSection,
+    push_mode: "recipes_mode"
+})
+
+// const ExitRecipes = createToken({
+//     name: "ExitRecipes",
+//     pattern: matchIngredientsSection,
+//     pop_mode: true
+// })
+
+// const EnterIngredients = createToken({
+//     name: "EnterIngredients",
+//     pattern: matchIngredientsSection,
+//     push_mode: "ingredients_mode",
+//     line_breaks: false
+// })
+const EnterIngredients = createToken({
+    name: "IngredientsSectionHeader",
+    pattern: matchIngredientsSection,
+    line_breaks: false,
+    push_mode: "ingredients_mode",
+    longer_alt: SectionHeader
+})
+
+
+const ExitIngredients = createToken({
+    name: "ExitIngredients",
+    pattern: matchStepsSection,
+    pop_mode: true,
+    line_breaks: false
+})
+// const EnterSteps = createToken({
+//     name: "EnterSteps",
+//     pattern: matchStepsSection,
+//     push_mode: "steps_mode",
+//     line_breaks: false
+// })
+const EnterSteps = createToken({
+    name: "StepsSectionHeader",
+    pattern: matchStepsSection,
+    line_breaks: false,
+    push_mode: "steps_mode",
+    longer_alt: SectionHeader
+})
+
+
+const ExitSteps = createToken({
+    name: "ExitSteps",
+    pattern: matchIngredientsSection,
+    pop_mode: true,
+    line_breaks: false,
+    // longer_alt: SectionHeader
 })
 
 /**
  * Holds the tokens used to parse the recipe. **Note** that the *order* in which these appear *matters*.
  */
-export const recipeTokens = [
+const recipeTokenTypes = [
+    // SectionHeader,
+    // IngredientsSectionHeader,
+    // StepsSectionHeader,
+    EnterIngredients,
+    EnterSteps,
+    SectionHeader
+]
+
+const ingredientTokenTypes = [
     NewLine,
     WhiteSpace,
     ListItemId,
     Amount, Quantity, WholeFraction, UnicodeFraction, Fraction, Decimal, Integer,
     Unit,
-    IngredientsSectionHeader,
-    StepsSectionHeader,
+    // IngredientsSectionHeader,
+    // StepsSectionHeader,
     SectionHeader,
+    // ExitIngredients,
+    // EnterSteps,
     Word,
 ]
 
-export const recipeTokenVocabulary = recipeTokens.reduce((vocab, token) => {
-    vocab[token.name] = token
-    return vocab
-}, {} as { [key: string]: TokenType })
+const stepTokenTypes = [
+    NewLine,
+    WhiteSpace,
+    ListItemId,
+    Amount, Quantity, WholeFraction, UnicodeFraction, Fraction, Decimal, Integer,
+    Unit,
+    // IngredientsSectionHeader,
+    // StepsSectionHeader,
+    SectionHeader,
+    // ExitSteps,
+    // EnterIngredients,
+    Word,
+]
+
+const recipeTokens = {
+    modes: {
+        recipe_mode: recipeTokenTypes,
+        ingredients_mode: [EnterSteps, ...ingredientTokenTypes, ExitIngredients],// StepsSectionHeader],//, EnterSteps],
+        steps_mode: [EnterIngredients, ...stepTokenTypes, ExitSteps],//IngredientsSectionHeader], //EnterIngredients]
+        // ingredients_mode: [...ingredientTokenTypes, ExitIngredients, EnterSteps],// StepsSectionHeader],//, EnterSteps],
+        // steps_mode: [...stepTokenTypes, ExitSteps, EnterIngredients],//IngredientsSectionHeader], //EnterIngredients]
+    },
+
+    defaultMode: "recipe_mode"
+}
+
+export function recipeTokensFor(inputType: ParseType = ParseType.RECIPE): Array<TokenType> | IMultiModeLexerDefinition {
+    switch (inputType) {
+        case ParseType.RECIPE:
+            return recipeTokens
+        case ParseType.INGREDIENTS:
+            return ingredientTokenTypes
+        case ParseType.STEPS:
+            return stepTokenTypes
+    }
+}
+
+// /**
+//  * Holds the tokens used to parse the recipe. **Note** that the *order* in which these appear *matters*.
+//  */
+// export const recipeTokens = [
+//     NewLine,
+//     WhiteSpace,
+//     ListItemId,
+//     Amount, Quantity, WholeFraction, UnicodeFraction, Fraction, Decimal, Integer,
+//     Unit,
+//     IngredientsSectionHeader,
+//     StepsSectionHeader,
+//     SectionHeader,
+//     Word,
+// ]
+
+// export const recipeTokenVocabulary = recipeTokens.reduce((vocab, token) => {
+//     vocab[token.name] = token
+//     return vocab
+// }, {} as { [key: string]: TokenType })
+
+export const recipeTokenVocabulary = Object
+    .values(recipeTokens.modes)
+    .flatMap(tokens => tokens)
+    .reduce((vocab, token) => {
+            vocab[token.name] = token
+            return vocab
+        },
+        {} as { [key: string]: TokenType }
+    )
 
 
 let recipeLexer: Lexer
@@ -139,13 +272,20 @@ let recipeLexer: Lexer
 /**
  * Converts the input text into a lexing result that can be parsed into an AST or CST.
  * @param input The input string
- * @param [logWarnings = false] When set to `true` then logs warning to the console, otherwise
+ * @param [inputType = ParseType.RECIPE] Optional parameter that defines what is being lexed; a whole recipe,
+ * just a list of ingredients, or just a list of steps.
  * does not log warnings. Warning and errors are reported in the returned object in either case.
+ * @param [logWarnings = false] When set to `true` then logs warning to the console, otherwise
  * @return The {@link ILexingResult} object holding the result of the lexing operation
  */
-export function lex(input: string, logWarnings: boolean = false): ILexingResult {
-    if (recipeLexer === undefined) {
-        recipeLexer = new Lexer(recipeTokens)
+export function lex(
+    input: string,
+    inputType: ParseType = ParseType.RECIPE,
+    logWarnings: boolean = false,
+    gimmeANewLexer: boolean = false
+): ILexingResult {
+    if (recipeLexer === undefined || gimmeANewLexer) {
+        recipeLexer = new Lexer(recipeTokensFor(inputType))
     }
     const result = recipeLexer.tokenize(input)
 

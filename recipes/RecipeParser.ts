@@ -1,21 +1,21 @@
 import {CstNode, CstParser, ILexingResult} from "chevrotain";
 import {lex, recipeTokenVocabulary} from "./lexer/RecipeLexer";
 
-const {
-    ListItemId,
-    Amount,
-    Integer,
-    Decimal,
-    Fraction,
-    UnicodeFraction,
-    WholeFraction,
-    Quantity,
-    Unit,
-    Word,
-    SectionHeader,
-    IngredientsSectionHeader,
-    StepsSectionHeader
-} = recipeTokenVocabulary
+// const {
+//     ListItemId,
+//     Amount,
+//     Integer,
+//     Decimal,
+//     Fraction,
+//     UnicodeFraction,
+//     WholeFraction,
+//     Quantity,
+//     Unit,
+//     Word,
+//     SectionHeader,
+//     IngredientsSectionHeader,
+//     StepsSectionHeader
+// } = recipeTokenVocabulary
 
 export enum RuleName {
     SECTIONS = "sections",
@@ -56,16 +56,16 @@ export class RecipeParser extends CstParser {
             DEF: () => {
                 this.OR([
                     {
-                        GATE: () => this.LA(1).tokenType === IngredientsSectionHeader,
+                        GATE: () => this.LA(1).tokenType === recipeTokenVocabulary.IngredientsSectionHeader,
                         ALT: () => {
-                            this.CONSUME(IngredientsSectionHeader)
+                            this.CONSUME(recipeTokenVocabulary.IngredientsSectionHeader)
                             this.SUBRULE(this.ingredients)
                         }
                     },
                     {
-                        GATE: () => this.LA(1).tokenType === StepsSectionHeader,
+                        GATE: () => this.LA(1).tokenType === recipeTokenVocabulary.StepsSectionHeader,
                         ALT: () => {
-                            this.CONSUME(StepsSectionHeader)
+                            this.CONSUME(recipeTokenVocabulary.StepsSectionHeader)
                             this.SUBRULE(this.steps)
                         }
                     }
@@ -84,7 +84,7 @@ export class RecipeParser extends CstParser {
             DEF: () => {
                 this.OR([
                     {
-                        GATE: () => this.LA(1).tokenType === SectionHeader,
+                        GATE: () => this.LA(1).tokenType === recipeTokenVocabulary.SectionHeader,
                         ALT: () => this.SUBRULE(this.ingredientsSection)
 
                     },
@@ -103,7 +103,7 @@ export class RecipeParser extends CstParser {
             DEF: () => {
                 this.OR([
                     {
-                        GATE: () => this.LA(1).tokenType === SectionHeader,
+                        GATE: () => this.LA(1).tokenType === recipeTokenVocabulary.SectionHeader,
                         ALT: () => this.SUBRULE(this.stepsSection)
                     },
                     {
@@ -118,7 +118,7 @@ export class RecipeParser extends CstParser {
     // want the section to be the parent node to the ingredients that follow, until a new section
     // header is encountered.
     ingredientsSection = this.RULE(RuleName.INGREDIENTS_SECTION, () => {
-        this.CONSUME(SectionHeader)
+        this.CONSUME(recipeTokenVocabulary.SectionHeader)
         this.AT_LEAST_ONE({
             DEF: () => {
                 this.SUBRULE(this.ingredientItem)
@@ -130,7 +130,7 @@ export class RecipeParser extends CstParser {
     // want the section to be the parent node to the steps that follow, until a new section
     // header is encountered.
     stepsSection = this.RULE(RuleName.STEPS_SECTION, () => {
-        this.CONSUME(SectionHeader)
+        this.CONSUME(recipeTokenVocabulary.SectionHeader)
         this.AT_LEAST_ONE({
             DEF: () => {
                 this.SUBRULE(this.stepItem)
@@ -157,19 +157,19 @@ export class RecipeParser extends CstParser {
 
     // the number or bullet of the list
     listItemId = this.RULE(RuleName.LIST_ITEM_ID, () => {
-        this.CONSUME(ListItemId)
+        this.CONSUME(recipeTokenVocabulary.ListItemId)
     })
 
     // the amount (e.g. 1 cup)
     amount = this.RULE(RuleName.AMOUNT, () => {
-        this.CONSUME(Amount)
+        this.CONSUME(recipeTokenVocabulary.Amount)
     })
 
     // the ingredient (e.g. all-purpose flour)
     ingredient = this.RULE(RuleName.INGREDIENT, () => {
         this.AT_LEAST_ONE({
             DEF: () => {
-                this.CONSUME(Word)
+                this.CONSUME(recipeTokenVocabulary.Word)
             }
         })
     })
@@ -179,15 +179,15 @@ export class RecipeParser extends CstParser {
         this.AT_LEAST_ONE({
             DEF: () => {
                 this.OR([
-                    {ALT: () => this.CONSUME(Word)},
-                    {ALT: () => this.CONSUME(Amount)},
-                    {ALT: () => this.CONSUME(Integer)},
-                    {ALT: () => this.CONSUME(Decimal)},
-                    {ALT: () => this.CONSUME(Fraction)},
-                    {ALT: () => this.CONSUME(UnicodeFraction)},
-                    {ALT: () => this.CONSUME(WholeFraction)},
-                    {ALT: () => this.CONSUME(Quantity)},
-                    {ALT: () => this.CONSUME(Unit)},
+                    {ALT: () => this.CONSUME(recipeTokenVocabulary.Word)},
+                    {ALT: () => this.CONSUME(recipeTokenVocabulary.Amount)},
+                    {ALT: () => this.CONSUME(recipeTokenVocabulary.Integer)},
+                    {ALT: () => this.CONSUME(recipeTokenVocabulary.Decimal)},
+                    {ALT: () => this.CONSUME(recipeTokenVocabulary.Fraction)},
+                    {ALT: () => this.CONSUME(recipeTokenVocabulary.UnicodeFraction)},
+                    {ALT: () => this.CONSUME(recipeTokenVocabulary.WholeFraction)},
+                    {ALT: () => this.CONSUME(recipeTokenVocabulary.Quantity)},
+                    {ALT: () => this.CONSUME(recipeTokenVocabulary.Unit)},
                 ])
             }
         })
@@ -230,7 +230,7 @@ export function parse(input: string, inputType: ParseType = ParseType.RECIPE): R
         parserInstance.reset()
     }
 
-    const lexingResult = lex(input)
+    const lexingResult = lex(input, inputType, false)
     parserInstance.input = lexingResult.tokens
 
     const cst = parserInstance[StartRule.get(inputType) || RuleName.SECTIONS]()

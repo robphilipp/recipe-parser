@@ -1,4 +1,4 @@
-export {recipeTokens, recipeTokenVocabulary, lex} from "./recipes/lexer/RecipeLexer"
+export {recipeTokensFor, recipeTokenVocabulary, lex} from "./recipes/lexer/RecipeLexer"
 export {RecipeParser, RecipeParseResult, parse, ParseType} from "./recipes/RecipeParser"
 export {
     ConvertResult,

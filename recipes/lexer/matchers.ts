@@ -326,8 +326,6 @@ export function matchSection(text: string, startOffset: number): CustomPatternMa
 }
 
 export function matchListItemId(text: string, startOffset: number): CustomPatternMatcherReturn | null {
-    // if (amountMatcher(text, startOffset) !== null) return null
-
     const match = /^(\(?\d+((\.\))|[.):]))|^[*•-](?:[ \t]+)/.exec(text.slice(startOffset))
     if (match !== null) {
         const result: CustomPatternMatcherReturn = [match[0]]
