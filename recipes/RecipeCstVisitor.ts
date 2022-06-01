@@ -12,8 +12,11 @@ export type ConvertResult<R extends Recipe | Array<Ingredient> | Array<Step>> = 
     errors: Array<ILexingError>
 }
 
+// type alias for returning the recipe
 export type RecipeResult = ConvertResult<Recipe>
+// type alias for returning a list of ingredients
 export type IngredientsResult = ConvertResult<Array<Ingredient>>
+// type alias for returning a list of steps
 export type StepsResult = ConvertResult<Array<Step>>
 
 // a new parser instance that will hold the concrete syntax tree (CST) output (enabled by default)
@@ -190,7 +193,6 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
      * @return The string of the concatenated words representing the strp
      */
     step(context: StepContext): string {
-        // return context.Word.map(i => i.image).join(" ")
         return context.Step[0].image
     }
 }
