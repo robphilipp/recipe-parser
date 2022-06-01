@@ -8,7 +8,7 @@ import {
     matchQuantity, matchSection,
     matchSectionIngredients,
     matchStepsSection,
-    matchUnicodeFraction,
+    matchUnicodeFraction, stepMatcher,
     unitMatcher
 } from "./matchers";
 import {ParseType} from "../ParseType";
@@ -68,7 +68,8 @@ const Word = createToken({
 })
 const Step = createToken({
     name: "Step",
-    pattern: regexParts.regex("(({{IntegerPart}}[ \t]+)|{{IntegerPart}}{{FractionalPart}}|{{RangePart}}|{{IntegerPart}}/{{NaturalNumberPart}}|{{StepPart}})+"),
+    pattern: stepMatcher,
+    // pattern: regexParts.regex("(({{IntegerPart}}[ \t]+)|{{IntegerPart}}{{FractionalPart}}|{{RangePart}}|{{IntegerPart}}/{{NaturalNumberPart}}|{{StepPart}})+"),
     // pattern: regexParts.regex("{{StepPart}}"),
     line_breaks: false
 })

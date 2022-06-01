@@ -301,30 +301,7 @@ export function matchSectionIngredients(text: string, startOffset: number): Cust
     // if the text matches an amount, then we don't want the section to match
     if (amountMatcher(text, startOffset) !== null) return null
 
-    return matchSection(text,startOffset)
-
-    // const match = regexParts.regex("^#[ \t]*{{SectionHeader}}([ \t]*#)?").exec(text.slice(startOffset))
-    // if (match !== null) {
-    //     const result: CustomPatternMatcherReturn = [match[0]]
-    //     result.payload = {
-    //         header: match[0]
-    //             .replace(/^#[ \t]*/, '')
-    //             .replace(/[ \t]*#$/, '')
-    //     }
-    //     return result
-    // }
-    //
-    // const matchLineBased = regexParts
-    //     .regex("^{{NewLine}}*{{SectionHeader}}{{NewLine}}")
-    //     .exec(text.slice(startOffset))
-    // if (matchLineBased !== null && (isLeadingValid(text, startOffset) || startOffset === 0)) {
-    //     const result: CustomPatternMatcherReturn = [matchLineBased[0]]
-    //     result.payload = {
-    //         header: matchLineBased[0].replace(/[\n\r]/g, '')
-    //     }
-    //     return result
-    // }
-    // return null
+    return matchSection(text, startOffset)
 }
 
 export function matchSection(text: string, startOffset: number): CustomPatternMatcherReturn | null {
@@ -352,6 +329,21 @@ export function matchSection(text: string, startOffset: number): CustomPatternMa
     return null
 }
 
+export function stepMatcher(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+    const step = text.slice(startOffset)
+    // is this a list item
+    if (/^[ \t]*-[ \t]+/.exec(step) != null) {
+        return null
+    }
+    const match = regexParts
+        .regex("^(({{IntegerPart}}[ \t]+)|{{IntegerPart}}{{FractionalPart}}|{{RangePart}}|{{IntegerPart}}/{{NaturalNumberPart}}|{{StepPart}})+")
+        .exec(step)
+    if (match != null) {
+        return [match[0]]
+    }
+    return null
+}
+
 export function matchListItemId(text: string, startOffset: number): CustomPatternMatcherReturn | null {
     const match = /^(\(?\d+((\.\))|[.):]))|^[*•-](?:[ \t]+)/.exec(text.slice(startOffset))
     if (match !== null) {
@@ -373,8 +365,8 @@ export function matchListItemId(text: string, startOffset: number): CustomPatter
  */
 export function isLeadingValid(text: string, startOffset: number): boolean {
     if (startOffset === 0) return true
-    if (text.charAt(startOffset-1) === ' ' || text.charAt(startOffset-1) === '\t') {
-        return isLeadingValid(text, startOffset-1)
+    if (text.charAt(startOffset - 1) === ' ' || text.charAt(startOffset - 1) === '\t') {
+        return isLeadingValid(text, startOffset - 1)
     }
     return text.charAt(startOffset - 1) == '\n';
 }
@@ -423,7 +415,6 @@ export function matchStepsSection(text: string, startOffset: number): CustomPatt
     }
     return null
 }
-
 
 
 /**

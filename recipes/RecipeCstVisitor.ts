@@ -306,7 +306,6 @@ export const defaultOptions: Options = {
  */
 export function convertText(
     text: string,
-    // inputType: ParseType = ParseType.RECIPE,
     options: Options = defaultOptions
 ): ConvertResult<Recipe | Array<Ingredient> | Array<Step>> {
     const {
@@ -320,23 +319,6 @@ export function convertText(
     if (toAstVisitorInstance === undefined || toAstVisitorInstance.deDupSections !== deDupSections) {
         toAstVisitorInstance = new RecipeCstVisitor(deDupSections)
     }
-
-    // function parse(input: string): RecipeParseResult {
-    //     const lexingResult = lex(input, {inputType: ParseType.RECIPE, logWarnings})
-    //
-    //     if (parserInstance !== undefined) {
-    //         parserInstance.reset()
-    //     }
-    //     if (parserInstance === null) throw Error("Parser instance is null")
-    //     parserInstance.input = lexingResult.tokens
-    //
-    //     // start parsing at the specified rule
-    //     const cst = parserInstance[StartRule.get(inputType) || RuleName.SECTIONS]()
-    //
-    //     return {parserInstance, cst, lexingResult}
-    // }
-    //
-    // const {cst, lexingResult} = parse(text)
 
     const {cst, lexingResult} = parse(text, {inputType, logWarnings, gimmeANewLexer, gimmeANewParser})
 

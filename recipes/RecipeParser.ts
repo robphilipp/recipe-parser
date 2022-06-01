@@ -2,22 +2,6 @@ import {CstNode, CstParser, ILexingResult} from "chevrotain";
 import {lex, recipeTokenVocabulary} from "./lexer/RecipeLexer";
 import {ParseType} from "./ParseType";
 
-// const {
-//     ListItemId,
-//     Amount,
-//     Integer,
-//     Decimal,
-//     Fraction,
-//     UnicodeFraction,
-//     WholeFraction,
-//     Quantity,
-//     Unit,
-//     Word,
-//     SectionHeader,
-//     IngredientsSectionHeader,
-//     StepsSectionHeader
-// } = recipeTokenVocabulary
-
 export enum RuleName {
     SECTIONS = "sections",
 
@@ -86,17 +70,14 @@ export class RecipeParser extends CstParser {
                 this.OR([
                     {
                         GATE: () => {
-                            console.log("ingredients::ingredientSectionHeader")
                             return this.LA(1).tokenType === recipeTokenVocabulary.SectionHeader
                         },
                         ALT: () => {
-                            console.log("ingredients::ingredientSection")
                             return this.SUBRULE(this.ingredientsSection)
                         }
                     },
                     {
                         ALT: () => {
-                            console.log("ingredients::ingredientItem")
                             this.SUBRULE(this.ingredientItem)
                         }
                     }
@@ -128,10 +109,8 @@ export class RecipeParser extends CstParser {
     // header is encountered.
     ingredientsSection = this.RULE(RuleName.INGREDIENTS_SECTION, () => {
         this.CONSUME(recipeTokenVocabulary.SectionHeader)
-        console.log("ingredientsSection consumed header")
         this.AT_LEAST_ONE({
             DEF: () => {
-                console.log("ingredientsSection::ingredientItem")
                 this.SUBRULE(this.ingredientItem)
             }
         })
@@ -187,21 +166,6 @@ export class RecipeParser extends CstParser {
 
     // the step instructions
     step = this.RULE(RuleName.STEP, () => {
-        // this.AT_LEAST_ONE({
-        //     DEF: () => {
-        //         this.OR([
-        //             {ALT: () => this.CONSUME(recipeTokenVocabulary.Word)},
-        //             {ALT: () => this.CONSUME(recipeTokenVocabulary.Amount)},
-        //             {ALT: () => this.CONSUME(recipeTokenVocabulary.Integer)},
-        //             {ALT: () => this.CONSUME(recipeTokenVocabulary.Decimal)},
-        //             {ALT: () => this.CONSUME(recipeTokenVocabulary.Fraction)},
-        //             {ALT: () => this.CONSUME(recipeTokenVocabulary.UnicodeFraction)},
-        //             {ALT: () => this.CONSUME(recipeTokenVocabulary.WholeFraction)},
-        //             {ALT: () => this.CONSUME(recipeTokenVocabulary.Quantity)},
-        //             {ALT: () => this.CONSUME(recipeTokenVocabulary.Unit)},
-        //         ])
-        //     }
-        // })
         this.CONSUME(recipeTokenVocabulary.Step)
     })
 }
