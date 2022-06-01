@@ -5,10 +5,12 @@ import {
     matchFraction,
     matchIngredientsSection,
     matchListItemId,
-    matchQuantity, matchSection,
+    matchQuantity,
+    matchSection,
     matchSectionIngredients,
     matchStepsSection,
-    matchUnicodeFraction, stepMatcher,
+    matchUnicodeFraction,
+    stepMatcher,
     unitMatcher
 } from "./matchers";
 import {ParseType} from "../ParseType";
@@ -69,8 +71,6 @@ const Word = createToken({
 const Step = createToken({
     name: "Step",
     pattern: stepMatcher,
-    // pattern: regexParts.regex("(({{IntegerPart}}[ \t]+)|{{IntegerPart}}{{FractionalPart}}|{{RangePart}}|{{IntegerPart}}/{{NaturalNumberPart}}|{{StepPart}})+"),
-    // pattern: regexParts.regex("{{StepPart}}"),
     line_breaks: false
 })
 const WhiteSpace = createToken({
@@ -85,18 +85,14 @@ const NewLine = createToken({
 })
 const ListItemId = createToken({
     name: "ListItemId",
-    // pattern: /(\(?\d+((.\))|[.):]))|[*•-]\w*/,
     pattern: matchListItemId,
     longer_alt: Decimal,
     line_breaks: false
 })
 const StepListItemId = createToken({
     name: "StepListItemId",
-    // name: "ListItemId",
-    // pattern: /(\(?\d+((.\))|[.):]))|[*•-]\w*/,
     pattern: matchListItemId,
     longer_alt: Step,
-    // longer_alt: Decimal,
     line_breaks: false
 })
 const SectionHeader = createToken({
@@ -112,51 +108,6 @@ const SectionHeaderInStep = createToken({
     line_breaks: false
 })
 
-// const Punctuation = createToken({
-//     name: "Punctuation",
-//     pattern: regexParts.regex("{{Punctuation}}"),
-//     longer_alt: ListItemId,
-//     line_breaks: false,
-//     group: Lexer.SKIPPED
-// })
-
-/*
- | SECTIONS
- */
-// const IngredientsSectionHeader = createToken({
-//     name: "IngredientsSectionHeader",
-//     pattern: matchIngredientsSection,
-//     line_breaks: false,
-//     // push_mode: "ingredients_mode",
-//     longer_alt: SectionHeader
-// })
-//
-// const StepsSectionHeader = createToken({
-//     name: "StepsSectionHeader",
-//     pattern: matchStepsSection,
-//     line_breaks: false,
-//     // push_mode: "steps_mode",
-//     longer_alt: SectionHeaderInStep
-// })
-//
-// const EnterRecipes = createToken({
-//     name: "EnterRecipes",
-//     // pattern: matchSection,
-//     push_mode: "recipes_mode"
-// })
-
-// const ExitRecipes = createToken({
-//     name: "ExitRecipes",
-//     pattern: matchIngredientsSection,
-//     pop_mode: true
-// })
-
-// const EnterIngredients = createToken({
-//     name: "EnterIngredients",
-//     pattern: matchIngredientsSection,
-//     push_mode: "ingredients_mode",
-//     line_breaks: false
-// })
 const EnterIngredients = createToken({
     name: "IngredientsSectionHeader",
     pattern: matchIngredientsSection,
@@ -172,12 +123,7 @@ const ExitIngredients = createToken({
     pop_mode: true,
     line_breaks: false
 })
-// const EnterSteps = createToken({
-//     name: "EnterSteps",
-//     pattern: matchStepsSection,
-//     push_mode: "steps_mode",
-//     line_breaks: false
-// })
+
 const EnterSteps = createToken({
     name: "StepsSectionHeader",
     pattern: matchStepsSection,
@@ -192,16 +138,12 @@ const ExitSteps = createToken({
     pattern: matchIngredientsSection,
     pop_mode: true,
     line_breaks: false,
-    // longer_alt: SectionHeader
 })
 
 /**
  * Holds the tokens used to parse the recipe. **Note** that the *order* in which these appear *matters*.
  */
 const recipeTokenTypes = [
-    // SectionHeader,
-    // IngredientsSectionHeader,
-    // StepsSectionHeader,
     EnterIngredients,
     EnterSteps,
     SectionHeader,
@@ -214,11 +156,7 @@ const ingredientTokenTypes = [
     ListItemId,
     Amount, Quantity, WholeFraction, UnicodeFraction, Fraction, Decimal, Integer,
     Unit,
-    // IngredientsSectionHeader,
-    // StepsSectionHeader,
     SectionHeader,
-    // ExitIngredients,
-    // EnterSteps,
     Word,
 ]
 
@@ -226,31 +164,15 @@ const stepTokenTypes = [
     NewLine,
     WhiteSpace,
     StepListItemId,
-    // ListItemId,
-    // Amount,
-    // Quantity, WholeFraction, UnicodeFraction, Fraction, Decimal, Integer,
-    // Unit,
     SectionHeaderInStep,
     Step,
-    // Word,
-    // Decimal, Integer, UnicodeFraction,
-
-    // NewLine,
-    // WhiteSpace,
-    // ListItemId,
-    // Amount, Quantity, WholeFraction, UnicodeFraction, Fraction, Decimal, Integer,
-    // Unit,
-    // SectionHeader,
-    // Word,
 ]
 
 const recipeTokens = {
     modes: {
         recipe_mode: recipeTokenTypes,
-        ingredients_mode: [EnterSteps, ...ingredientTokenTypes, ExitIngredients, SectionHeaderInStep],// StepsSectionHeader],//, EnterSteps],
-        steps_mode: [EnterIngredients, ...stepTokenTypes, ExitSteps],//IngredientsSectionHeader], //EnterIngredients]
-        // ingredients_mode: [...ingredientTokenTypes, ExitIngredients, EnterSteps],// StepsSectionHeader],//, EnterSteps],
-        // steps_mode: [...stepTokenTypes, ExitSteps, EnterIngredients],//IngredientsSectionHeader], //EnterIngredients]
+        ingredients_mode: [EnterSteps, ...ingredientTokenTypes, ExitIngredients, SectionHeaderInStep],
+        steps_mode: [EnterIngredients, ...stepTokenTypes, ExitSteps],
     },
 
     defaultMode: "recipe_mode"
@@ -266,26 +188,6 @@ export function recipeTokensFor(inputType: ParseType = ParseType.RECIPE): Array<
             return stepTokenTypes
     }
 }
-
-// /**
-//  * Holds the tokens used to parse the recipe. **Note** that the *order* in which these appear *matters*.
-//  */
-// export const recipeTokens = [
-//     NewLine,
-//     WhiteSpace,
-//     ListItemId,
-//     Amount, Quantity, WholeFraction, UnicodeFraction, Fraction, Decimal, Integer,
-//     Unit,
-//     IngredientsSectionHeader,
-//     StepsSectionHeader,
-//     SectionHeader,
-//     Word,
-// ]
-
-// export const recipeTokenVocabulary = recipeTokens.reduce((vocab, token) => {
-//     vocab[token.name] = token
-//     return vocab
-// }, {} as { [key: string]: TokenType })
 
 export const recipeTokenVocabulary = Object
     .values(recipeTokens.modes)

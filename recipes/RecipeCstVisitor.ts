@@ -2,7 +2,7 @@ import {parse, RecipeParser} from "./RecipeParser";
 import {Unit} from "./lexer/Units";
 import {CstChildrenDictionary, CstNode, ILexingError, IToken} from "chevrotain";
 import {ParseType} from "./ParseType";
-import It = jest.It;
+
 
 /**
  * The result of the lexing, parsing, and visiting.
@@ -130,7 +130,7 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
     }
 
     /**
-     * Called by the ingredient item visitor and the shamelessly ignored to pull out the ingredient-item's
+     * Called by the step item visitor and the shamelessly ignored to pull out the ingredient-item's
      * list ID (i.e. 1. or 1) or * or -, etc).
      * @param context The context holding the ingredient-item's list ID, if it has one
      * @return The ingredient-item's list ID
@@ -159,9 +159,9 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
      * @return The step item
      */
     stepItem(context: StepItemContext): Step {
-        const listItemId = this.visit(context.stepListItemId)
+        const stepListItemId = this.visit(context.stepListItemId)
         const step = this.visit(context.step)
-        return {id: listItemId, step, title: null}
+        return {id: stepListItemId, step, title: null}
     }
 
     /**
@@ -252,8 +252,7 @@ type IngredientContext = CstChildrenDictionary & {
 }
 
 type StepContext = CstChildrenDictionary & {
-    listItemId: IToken
-    // Word: Array<IToken>
+    stepListItemId: IToken
     Step: Array<IToken>
 }
 

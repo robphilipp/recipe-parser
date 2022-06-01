@@ -182,8 +182,6 @@ export type RecipeParseResult = {
 
 export const StartRule = new Map<ParseType, RuleName>([
     [ParseType.RECIPE, RuleName.SECTIONS],
-    // [ParseType.INGREDIENTS, RuleName.INGREDIENTS_SECTION],
-    // [ParseType.STEPS, RuleName.STEPS_SECTION]
     [ParseType.INGREDIENTS, RuleName.INGREDIENTS],
     [ParseType.STEPS, RuleName.STEPS]
 ])

@@ -1,5 +1,10 @@
 # recipe-parser version history
 
+## version 1.1.0 (cleaned-up return types; fixed steps parsing)
+
+1. Fixed the way steps were parsed that restricted special characters and made the parsing quirky overall. Now the lexer is a multi-mode lexer so that the steps can really be free form. 
+2. Updated the return types from the `toRecipe`, `toIngredients`, and `toSteps` functions so that they return a type specific to the action. This cleans up the typing, making it altogether less confusing.
+
 ## version 1.0.0 (parsing functions renamed)
 
 1. The `toRecipe(...)` function has been renamed to `convertText(...)`, but I encourage you to use the new `toRecipe(..)`, `toIngredients(...)`, and the `toSteps(...)` functions instead.
