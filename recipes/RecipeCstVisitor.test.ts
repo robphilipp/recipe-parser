@@ -154,7 +154,7 @@ describe("when creating an ast", () => {
 6. Mix together and table out 2 tablespoon of spice for rubbing then put the rest into food processor
 Sauce
 7. Spice rub powder, Fresno pepper (keep some seeds to adjust the spiciness you like)
-8. add 3 cloves of garlic  and 2 tbsp of sugar then pause with food processor until the sauce is chopped
+8. add 3 cloves of garlic and 2 tbsp of sugar then pause with food processor until the sauce is chopped
 9. Pour 1/4 cup red wine and 1/3 cup lemon juice into the food processor then pulse the sauce.
 Instructions
 10. Reserve 1/4 cup of sauce with juice and brush sauce on the chicken skin. Marinate on the chicken for 45 mins.
@@ -186,13 +186,13 @@ Instructions
                 {id: "4.", step: "1.5 tbsp salt", title: null},
                 {id: "5.", step: "2 tbsp of New Mexico Chile powder or Chile powder of your choice", title: null},
                 {id: "6.", step: "Mix together and table out 2 tablespoon of spice for rubbing then put the rest into food processor", title: null},
-                {id: "7.", step: "Spice rub powder Fresno pepper (keep some seeds to adjust the spiciness you like)", title: "Sauce"},
-                {id: "8.", step: "add 3 cloves of garlic and of sugar then pause with food processor until the sauce is chopped", title: null},
-                {id: "9.", step: "Pour red wine and lemon juice into the food processor then pulse the sauce.", title: null},
-                {id: "10.", step: "Reserve 1/4 cup of sauce with 1/3 cup lemon juice and brush sauce on the chicken skin. Marinate on the chicken for 45 mins.", title: "Instructions"},
+                {id: "7.", step: "Spice rub powder, Fresno pepper (keep some seeds to adjust the spiciness you like)", title: "Sauce"},
+                {id: "8.", step: "add 3 cloves of garlic and 2 tbsp of sugar then pause with food processor until the sauce is chopped", title: null},
+                {id: "9.", step: "Pour 1/4 cup red wine and 1/3 cup lemon juice into the food processor then pulse the sauce.", title: null},
+                {id: "10.", step: "Reserve 1/4 cup of sauce with juice and brush sauce on the chicken skin. Marinate on the chicken for 45 mins.", title: "Instructions"},
                 {id: "11.", step: "Put on a tray with salt on bottom and rack on top put chicken on the rack.", title: null},
-                {id: "12.", step: "Set oven at degree 425 F and roast for 45-50 mins. Then take out the chicken and brush with of another layer of pepper sauce. Put back into oven for another -15 mins. Then take the chicken out and rest/cool for mins.", title: null},
-                {id: "13.", step: "Add cilantro with leaves and stems to the sauce then put one last brushing on the chicken. Ready to serve", title: null}            ]
+                {id: "12.", step: "Set oven at 425 degree F and roast for 45-50 mins. Then take out the chicken and brush with 2 tbsp of another layer of pepper sauce. Put back into oven for another 10-15 mins. Then take the chicken out and rest/cool for 10 mins.", title: null},
+                {id: "13.", step: "Add 1 cup cilantro with leaves and stems to the sauce then put one last brushing on the chicken. Ready to serve", title: null}            ]
         })
         expect(errors).toHaveLength(0)
     })
