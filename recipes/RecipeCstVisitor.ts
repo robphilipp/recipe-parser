@@ -2,6 +2,7 @@ import {parse, RecipeParser} from "./RecipeParser";
 import {Unit} from "./lexer/Units";
 import {CstChildrenDictionary, CstNode, ILexingError, IToken} from "chevrotain";
 import {ParseType} from "./ParseType";
+import It = jest.It;
 
 /**
  * The result of the lexing, parsing, and visiting.
@@ -107,7 +108,7 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
      * @return An array of steps items (list id, step)
      */
     stepsSection(context: StepsSectionContext): Array<Step> {
-        const title = context.SectionHeader[0].payload
+        const title = context.SectionHeaderInStep[0].payload
         const steps = context.stepItem.map(cstNode => this.visit(cstNode))
         // when user only wants the first step to have the section header set, then de-dup it true
         if (this.deDupSections && steps.length > 0) {
@@ -126,6 +127,16 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
      */
     listItemId(context: ListItemIdContext): string {
         return context.ListItemId[0].image
+    }
+
+    /**
+     * Called by the ingredient item visitor and the shamelessly ignored to pull out the ingredient-item's
+     * list ID (i.e. 1. or 1) or * or -, etc).
+     * @param context The context holding the ingredient-item's list ID, if it has one
+     * @return The ingredient-item's list ID
+     */
+    stepListItemId(context: StepListItemIdContext): string {
+        return context.StepListItemId[0].image
     }
 
     /**
@@ -148,7 +159,7 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
      * @return The step item
      */
     stepItem(context: StepItemContext): Step {
-        const listItemId = this.visit(context.listItemId)
+        const listItemId = this.visit(context.stepListItemId)
         const step = this.visit(context.step)
         return {id: listItemId, step, title: null}
     }
@@ -179,7 +190,8 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
      * @return The string of the concatenated words representing the strp
      */
     step(context: StepContext): string {
-        return context.Word.map(i => i.image).join(" ")
+        // return context.Word.map(i => i.image).join(" ")
+        return context.Step[0].image
     }
 }
 
@@ -206,13 +218,17 @@ type ListItemIdContext = CstChildrenDictionary & {
     ListItemId: Array<IToken>
 }
 
+type StepListItemIdContext = CstChildrenDictionary & {
+    StepListItemId: Array<IToken>
+}
+
 type IngredientsSectionContext = CstChildrenDictionary & {
     SectionHeader: Array<IToken>
     ingredientItem: Array<CstNode>
 }
 
 type StepsSectionContext = CstChildrenDictionary & {
-    SectionHeader: Array<IToken>
+    SectionHeaderInStep: Array<IToken>
     stepItem: Array<CstNode>
 }
 
@@ -223,7 +239,7 @@ type IngredientItemContext = CstChildrenDictionary & {
 }
 
 type StepItemContext = CstChildrenDictionary & {
-    listItemId: Array<CstNode>
+    stepListItemId: Array<CstNode>
     step: Array<CstNode>
 }
 
@@ -237,7 +253,8 @@ type IngredientContext = CstChildrenDictionary & {
 
 type StepContext = CstChildrenDictionary & {
     listItemId: IToken
-    Word: Array<IToken>
+    // Word: Array<IToken>
+    Step: Array<IToken>
 }
 
 /*

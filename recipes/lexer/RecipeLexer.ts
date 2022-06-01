@@ -91,7 +91,8 @@ const ListItemId = createToken({
     line_breaks: false
 })
 const StepListItemId = createToken({
-    name: "ListItemId",
+    name: "StepListItemId",
+    // name: "ListItemId",
     // pattern: /(\(?\d+((.\))|[.):]))|[*•-]\w*/,
     pattern: matchListItemId,
     longer_alt: Step,

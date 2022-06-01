@@ -16,7 +16,8 @@ export enum RuleName {
     STEP_ITEM = "stepItem",
     STEP = "step",
 
-    LIST_ITEM_ID = "listItemId"
+    LIST_ITEM_ID = "listItemId",
+    STEP_LIST_ITEM_ID = "stepListItemId",
 }
 
 /**
@@ -69,12 +70,8 @@ export class RecipeParser extends CstParser {
             DEF: () => {
                 this.OR([
                     {
-                        GATE: () => {
-                            return this.LA(1).tokenType === recipeTokenVocabulary.SectionHeader
-                        },
-                        ALT: () => {
-                            return this.SUBRULE(this.ingredientsSection)
-                        }
+                        GATE: () => this.LA(1).tokenType === recipeTokenVocabulary.SectionHeader,
+                        ALT: () =>  this.SUBRULE(this.ingredientsSection)
                     },
                     {
                         ALT: () => {
@@ -140,7 +137,7 @@ export class RecipeParser extends CstParser {
     // a step, possibly as a number or bulleted list
     stepItem = this.RULE(RuleName.STEP_ITEM, () => {
         this.OPTION(() => {
-            this.SUBRULE(this.listItemId)
+            this.SUBRULE(this.stepListItemId)
         })
         this.SUBRULE(this.step)
     })
@@ -148,6 +145,11 @@ export class RecipeParser extends CstParser {
     // the number or bullet of the list
     listItemId = this.RULE(RuleName.LIST_ITEM_ID, () => {
         this.CONSUME(recipeTokenVocabulary.ListItemId)
+    })
+
+    // the number or bullet of the list
+    stepListItemId = this.RULE(RuleName.STEP_LIST_ITEM_ID, () => {
+        this.CONSUME(recipeTokenVocabulary.StepListItemId)
     })
 
     // the amount (e.g. 1 cup)

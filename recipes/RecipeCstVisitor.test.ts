@@ -10,7 +10,6 @@ describe("when creating an ast", () => {
         1 egg`
 
         const {result: ingredients, errors} = toIngredients(input)
-        expect(true).toBeTruthy()
         expect(ingredients).toEqual([
                 {amount: {quantity: 1.5, unit: Unit.CUP}, ingredient: 'all-purpose flour', section: null, brand: null},
                 {amount: {quantity: 1, unit: Unit.TEASPOON}, ingredient: 'vanilla extract', section: null, brand: null},
