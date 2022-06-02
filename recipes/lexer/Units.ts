@@ -57,7 +57,7 @@ export const baseUnits: Units = {
         target: Unit.MILLILITER
     },
     liter: {
-        abbreviations: ['l'],
+        abbreviations: ['l', 'ℓ'],
         synonyms: ['litre', 'liter'],
         target: Unit.LITER
     },

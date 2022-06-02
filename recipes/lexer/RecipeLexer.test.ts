@@ -186,13 +186,13 @@ describe("when using the recipe lexer for section headers", () => {
     })
     it("should be able to lex a section header and several ingredients", () => {
         const result = lex(
-            `#Section Header#\n- 1/2 cup all purpose flour\n1 ¼ cup whole milk`,
+            `#Section Header#\n- 1/2 cup all purpose flour\n1 ¼ ℓ whole milk`,
             {inputType: ParseType.INGREDIENTS, gimmeANewLexer: true}
         )
         expect(result.tokens.map(token => token.image))
-            .toEqual(['#Section Header#', "- ", "1/2 cup", "all", "purpose", "flour", "1 ¼ cup", "whole", "milk"])
+            .toEqual(['#Section Header#', "- ", "1/2 cup", "all", "purpose", "flour", "1 ¼ ℓ", "whole", "milk"])
         expect(result.tokens[2].payload).toEqual({quantity: [1, 2], unit: 'cup'})
-        expect(result.tokens[6].payload).toEqual({quantity: [5, 4], unit: 'cup'})
+        expect(result.tokens[6].payload).toEqual({quantity: [5, 4], unit: 'l'})
     })
     it("should be able to lex a several ingredients", () => {
         const result = lex(`1 1/2 cup all purpose flour\n1 tsp vanilla`)

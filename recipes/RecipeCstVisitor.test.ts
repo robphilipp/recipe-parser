@@ -82,7 +82,7 @@ describe("when creating an ast", () => {
             1 1/2 cp all-purpose flour
             1 tsp vanilla extract,
             sauce
-            1 cup milk
+            ⅛ ℓ milk
             1 egg`
 
         const {result: ingredients, errors} = toIngredients(input)
@@ -90,7 +90,7 @@ describe("when creating an ast", () => {
         expect(ingredients).toEqual([
                 {amount: {quantity: 1.5, unit: Unit.CUP}, ingredient: 'all-purpose flour', section: 'dough', brand: null},
                 {amount: {quantity: 1, unit: Unit.TEASPOON}, ingredient: 'vanilla extract', section: 'dough', brand: null},
-                {amount: {quantity: 1, unit: Unit.CUP}, ingredient: 'milk', section: 'sauce', brand: null},
+                {amount: {quantity: 0.125, unit: Unit.LITER}, ingredient: 'milk', section: 'sauce', brand: null},
                 {amount: {quantity: 1, unit: Unit.PIECE}, ingredient: 'egg', section: 'sauce', brand: null},
             ])
         expect(errors).toHaveLength(1)

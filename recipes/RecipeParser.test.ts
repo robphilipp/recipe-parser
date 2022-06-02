@@ -154,13 +154,12 @@ describe("when parsing a recipe", () => {
 
     })
     it("should work for multiple items and sections without #header", () => {
-        // const {parserInstance, cst} = parse(`1 lb sugar\ndough me\n1 1/2 cp all-purpose flour\n1 tsp vanilla extract\nsauce\n1 cup milk\n`)
         const {parserInstance, cst} = parse(`1 lb sugar
 dough me
 1 1/2 cp all-purpose flour
 1 tsp vanilla extract
 sauce
-1 cup milk`, {inputType: ParseType.INGREDIENTS, gimmeANewParser: true, gimmeANewLexer: true})
+1 ℓ milk`, {inputType: ParseType.INGREDIENTS, gimmeANewParser: true, gimmeANewLexer: true})
 
         expect(cst.name).toBe('ingredients')
         expect(cst.children).toBeDefined()
@@ -242,8 +241,8 @@ sauce
         expect(milkAmount.name).toBe("amount")
         expect(milkAmount.children.Amount).toHaveLength(1)
         const milkAmountToken = milkAmount.children.Amount[0] as IToken
-        expect(milkAmountToken.image).toBe("1 cup")
-        expect(milkAmountToken.payload).toEqual({quantity: [1, 1], unit: "cup"})
+        expect(milkAmountToken.image).toBe("1 ℓ")
+        expect(milkAmountToken.payload).toEqual({quantity: [1, 1], unit: "l"})
 
         const milkIngredient = milk.children.ingredient[0] as CstNode
         expect(milkIngredient.name).toBe("ingredient")
