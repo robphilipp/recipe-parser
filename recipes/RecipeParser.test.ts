@@ -405,17 +405,17 @@ sauce
 
         const doughStepsItems = stepsDough.children.stepItem as Array<CstNode>
         const doughStepOne = doughStepsItems[0] as CstNode
-        expect((doughStepOne.children.listItemId[0] as CstNode).name).toBe("listItemId")
-        const doughStepOneListItem = doughStepOne.children.listItemId[0] as CstNode
-        expect((doughStepOneListItem.children.ListItemId[0] as IToken).image).toBe("1.")
+        expect((doughStepOne.children.stepListItemId[0] as CstNode).name).toBe("stepListItemId")
+        const doughStepOneListItem = doughStepOne.children.stepListItemId[0] as CstNode
+        expect((doughStepOneListItem.children.StepListItemId[0] as IToken).image).toBe("1.")
 
         const doughStepOneStepItem = (doughStepOne.children.step[0] as CstNode).children.Step as Array<IToken>
         expect(doughStepOneStepItem.map(tkn => tkn.image).join(" ")).toBe("first step for the Dough")
 
         const doughStepTwo = doughStepsItems[1] as CstNode
-        expect((doughStepTwo.children.listItemId[0] as CstNode).name).toBe("listItemId")
-        const doughStepTwoListItem = doughStepTwo.children.listItemId[0] as CstNode
-        expect((doughStepTwoListItem.children.ListItemId[0] as IToken).image).toBe("2.")
+        expect((doughStepTwo.children.stepListItemId[0] as CstNode).name).toBe("stepListItemId")
+        const doughStepTwoListItem = doughStepTwo.children.stepListItemId[0] as CstNode
+        expect((doughStepTwoListItem.children.StepListItemId[0] as IToken).image).toBe("2.")
 
         const doughStepTwoStepItem = (doughStepTwo.children.step[0] as CstNode).children.Step as Array<IToken>
         expect(doughStepTwoStepItem.map(tkn => tkn.image).join(" ")).toBe("second step for the Dough")
@@ -429,19 +429,19 @@ sauce
         const sauceStepsItems = stepsSauce.children.stepItem as Array<CstNode>
         const sauceStepOne = sauceStepsItems[0] as CstNode
 
-        expect((sauceStepOne.children.listItemId[0] as CstNode).name).toBe("listItemId")
+        expect((sauceStepOne.children.stepListItemId[0] as CstNode).name).toBe("stepListItemId")
         expect(sauceStepOne.name).toBe("stepItem")
-        const sauceStepOneListItem = sauceStepOne.children.listItemId[0] as CstNode
-        expect((sauceStepOneListItem.children.ListItemId[0] as IToken).image).toBe("1)")
+        const sauceStepOneListItem = sauceStepOne.children.stepListItemId[0] as CstNode
+        expect((sauceStepOneListItem.children.StepListItemId[0] as IToken).image).toBe("1)")
 
         const sauceStepOneStepItem = (sauceStepOne.children.step[0] as CstNode).children.Step as Array<IToken>
         expect(sauceStepOneStepItem.map(tkn => tkn.image).join(" ")).toBe("saucy first step is a tough one")
 
         const sauceStepTwo = sauceStepsItems[1] as CstNode
-        expect((sauceStepTwo.children.listItemId[0] as CstNode).name).toBe("listItemId")
-        const sauceStepTwoListItem = sauceStepTwo.children.listItemId[0] as CstNode
-        expect((sauceStepTwoListItem.children.ListItemId[0] as IToken).image).toBe("* ")
-        expect((sauceStepTwoListItem.children.ListItemId[0] as IToken).payload.id).toBe("*")
+        expect((sauceStepTwo.children.stepListItemId[0] as CstNode).name).toBe("stepListItemId")
+        const sauceStepTwoListItem = sauceStepTwo.children.stepListItemId[0] as CstNode
+        expect((sauceStepTwoListItem.children.StepListItemId[0] as IToken).image).toBe("* ")
+        expect((sauceStepTwoListItem.children.StepListItemId[0] as IToken).payload.id).toBe("*")
 
         const sauceStepTwoStepItem = (sauceStepTwo.children.step[0] as CstNode).children.Step as Array<IToken>
         expect(sauceStepTwoStepItem.map(tkn => tkn.image).join(" ")).toBe("saucy2 second step is easy")
