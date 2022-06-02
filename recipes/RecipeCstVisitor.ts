@@ -1,7 +1,8 @@
-import {ParseType, RecipeParser, RecipeParseResult, RuleName, StartRule} from "./RecipeParser";
+import {parse, RecipeParser} from "./RecipeParser";
 import {Unit} from "./lexer/Units";
 import {CstChildrenDictionary, CstNode, ILexingError, IToken} from "chevrotain";
-import {lex} from "./lexer/RecipeLexer";
+import {ParseType} from "./ParseType";
+
 
 /**
  * The result of the lexing, parsing, and visiting.
@@ -11,8 +12,11 @@ export type ConvertResult<R extends Recipe | Array<Ingredient> | Array<Step>> = 
     errors: Array<ILexingError>
 }
 
+// type alias for returning the recipe
 export type RecipeResult = ConvertResult<Recipe>
+// type alias for returning a list of ingredients
 export type IngredientsResult = ConvertResult<Array<Ingredient>>
+// type alias for returning a list of steps
 export type StepsResult = ConvertResult<Array<Step>>
 
 // a new parser instance that will hold the concrete syntax tree (CST) output (enabled by default)
@@ -107,7 +111,7 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
      * @return An array of steps items (list id, step)
      */
     stepsSection(context: StepsSectionContext): Array<Step> {
-        const title = context.SectionHeader[0].payload
+        const title = context.SectionHeaderInStep[0].payload
         const steps = context.stepItem.map(cstNode => this.visit(cstNode))
         // when user only wants the first step to have the section header set, then de-dup it true
         if (this.deDupSections && steps.length > 0) {
@@ -126,6 +130,16 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
      */
     listItemId(context: ListItemIdContext): string {
         return context.ListItemId[0].image
+    }
+
+    /**
+     * Called by the step item visitor and the shamelessly ignored to pull out the ingredient-item's
+     * list ID (i.e. 1. or 1) or * or -, etc).
+     * @param context The context holding the ingredient-item's list ID, if it has one
+     * @return The ingredient-item's list ID
+     */
+    stepListItemId(context: StepListItemIdContext): string {
+        return context.StepListItemId[0].image
     }
 
     /**
@@ -148,9 +162,9 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
      * @return The step item
      */
     stepItem(context: StepItemContext): Step {
-        const listItemId = this.visit(context.listItemId)
+        const stepListItemId = this.visit(context.stepListItemId)
         const step = this.visit(context.step)
-        return {id: listItemId, step, title: null}
+        return {id: stepListItemId, step, title: null}
     }
 
     /**
@@ -179,7 +193,7 @@ export class RecipeCstVisitor extends BaseRecipeVisitor {
      * @return The string of the concatenated words representing the strp
      */
     step(context: StepContext): string {
-        return context.Word.map(i => i.image).join(" ")
+        return context.Step[0].image
     }
 }
 
@@ -206,13 +220,17 @@ type ListItemIdContext = CstChildrenDictionary & {
     ListItemId: Array<IToken>
 }
 
+type StepListItemIdContext = CstChildrenDictionary & {
+    StepListItemId: Array<IToken>
+}
+
 type IngredientsSectionContext = CstChildrenDictionary & {
     SectionHeader: Array<IToken>
     ingredientItem: Array<CstNode>
 }
 
 type StepsSectionContext = CstChildrenDictionary & {
-    SectionHeader: Array<IToken>
+    SectionHeaderInStep: Array<IToken>
     stepItem: Array<CstNode>
 }
 
@@ -223,7 +241,7 @@ type IngredientItemContext = CstChildrenDictionary & {
 }
 
 type StepItemContext = CstChildrenDictionary & {
-    listItemId: Array<CstNode>
+    stepListItemId: Array<CstNode>
     step: Array<CstNode>
 }
 
@@ -236,8 +254,8 @@ type IngredientContext = CstChildrenDictionary & {
 }
 
 type StepContext = CstChildrenDictionary & {
-    listItemId: IToken
-    Word: Array<IToken>
+    stepListItemId: IToken
+    Step: Array<IToken>
 }
 
 /*
@@ -273,22 +291,26 @@ export type Amount = {
 let toAstVisitorInstance: RecipeCstVisitor
 
 export type Options = {
+    // The thing that the input text represents: a whole recipe, a list of ingredients,
+    // or a list of steps.
+    inputType?: ParseType
     // When set to `true` only sets the section of the first ingredient of each
     // section to current section.
     deDupSections?: boolean
     // When set to `true` then logs warning to the console, otherwise
     // does not log warnings. Warning and errors are reported in the returned object
     // in either case.
-    logWarnings?: boolean
-    // The thing that the input text represents: a whole recipe, a list of ingredients,
-    // or a list of steps.
-    inputType?: ParseType
+    logWarnings?: boolean,
+    gimmeANewLexer?: boolean
+    gimmeANewParser?: boolean
 }
 
 export const defaultOptions: Options = {
+    inputType: ParseType.RECIPE,
     deDupSections: false,
     logWarnings: false,
-    // inputType: ParseType.RECIPE
+    gimmeANewLexer: false,
+    gimmeANewParser: false
 }
 
 /**
@@ -302,34 +324,21 @@ export const defaultOptions: Options = {
  */
 export function convertText(
     text: string,
-    inputType: ParseType = ParseType.RECIPE,
     options: Options = defaultOptions
 ): ConvertResult<Recipe | Array<Ingredient> | Array<Step>> {
     const {
+        inputType = ParseType.RECIPE,
         deDupSections = false,
         logWarnings = false,
+        gimmeANewParser = false,
+        gimmeANewLexer = false
     } = options
 
     if (toAstVisitorInstance === undefined || toAstVisitorInstance.deDupSections !== deDupSections) {
         toAstVisitorInstance = new RecipeCstVisitor(deDupSections)
     }
 
-    function parse(input: string): RecipeParseResult {
-        const lexingResult = lex(input, logWarnings)
-
-        if (parserInstance !== undefined) {
-            parserInstance.reset()
-        }
-        if (parserInstance === null) throw Error("Parser instance is null")
-        parserInstance.input = lexingResult.tokens
-
-        // start parsing at the specified rule
-        const cst = parserInstance[StartRule.get(inputType) || RuleName.SECTIONS]()
-
-        return {parserInstance, cst, lexingResult}
-    }
-
-    const {cst, lexingResult} = parse(text)
+    const {cst, lexingResult} = parse(text, {inputType, logWarnings, gimmeANewLexer, gimmeANewParser})
 
     return {
         result: toAstVisitorInstance.visit(cst),
@@ -348,7 +357,7 @@ export function convertText(
  * @see toSteps
  */
 export function toRecipe(text: string, options: Options = defaultOptions): RecipeResult {
-    return convertText(text, ParseType.RECIPE, options) as RecipeResult
+    return convertText(text, {...options, inputType: ParseType.RECIPE}) as RecipeResult
 }
 
 /**
@@ -361,7 +370,7 @@ export function toRecipe(text: string, options: Options = defaultOptions): Recip
  * @see toSteps
  */
 export function toIngredients(text: string, options: Options = defaultOptions): IngredientsResult {
-    return convertText(text, ParseType.INGREDIENTS, options) as IngredientsResult
+    return convertText(text, {...options, inputType: ParseType.INGREDIENTS}) as IngredientsResult
 }
 
 /**
@@ -374,5 +383,5 @@ export function toIngredients(text: string, options: Options = defaultOptions): 
  * @see toIngredients
  */
 export function toSteps(text: string, options: Options = defaultOptions): StepsResult {
-    return convertText(text, ParseType.STEPS, options) as StepsResult
+    return convertText(text, {...options, inputType: ParseType.STEPS}) as StepsResult
 }

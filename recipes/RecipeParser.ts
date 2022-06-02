@@ -1,7 +1,6 @@
 import {CstNode, CstParser, ILexingResult} from "chevrotain";
 import {lex, recipeTokenVocabulary} from "./lexer/RecipeLexer";
-
-const {ListItemId, Amount, Word, SectionHeader, IngredientsSectionHeader, StepsSectionHeader} = recipeTokenVocabulary
+import {ParseType} from "./ParseType";
 
 export enum RuleName {
     SECTIONS = "sections",
@@ -17,8 +16,10 @@ export enum RuleName {
     STEP_ITEM = "stepItem",
     STEP = "step",
 
-    LIST_ITEM_ID = "listItemId"
+    LIST_ITEM_ID = "listItemId",
+    STEP_LIST_ITEM_ID = "stepListItemId",
 }
+
 /**
  * Constructs a concrete syntax tree that holds the [ingredients] element as root. The [ingredients]
  * can have children of type [ingredient-items] or [section]. The [section] has [ingredient-item] as
@@ -41,16 +42,16 @@ export class RecipeParser extends CstParser {
             DEF: () => {
                 this.OR([
                     {
-                        GATE: () => this.LA(1).tokenType === IngredientsSectionHeader,
+                        GATE: () => this.LA(1).tokenType === recipeTokenVocabulary.IngredientsSectionHeader,
                         ALT: () => {
-                            this.CONSUME(IngredientsSectionHeader)
+                            this.CONSUME(recipeTokenVocabulary.IngredientsSectionHeader)
                             this.SUBRULE(this.ingredients)
                         }
                     },
                     {
-                        GATE: () => this.LA(1).tokenType === StepsSectionHeader,
+                        GATE: () => this.LA(1).tokenType === recipeTokenVocabulary.StepsSectionHeader,
                         ALT: () => {
-                            this.CONSUME(StepsSectionHeader)
+                            this.CONSUME(recipeTokenVocabulary.StepsSectionHeader)
                             this.SUBRULE(this.steps)
                         }
                     }
@@ -69,12 +70,13 @@ export class RecipeParser extends CstParser {
             DEF: () => {
                 this.OR([
                     {
-                        GATE: () => this.LA(1).tokenType === SectionHeader,
-                        ALT: () => this.SUBRULE(this.ingredientsSection)
-
+                        GATE: () => this.LA(1).tokenType === recipeTokenVocabulary.SectionHeader,
+                        ALT: () =>  this.SUBRULE(this.ingredientsSection)
                     },
                     {
-                        ALT: () => this.SUBRULE(this.ingredientItem)
+                        ALT: () => {
+                            this.SUBRULE(this.ingredientItem)
+                        }
                     }
                 ])
             }
@@ -88,7 +90,7 @@ export class RecipeParser extends CstParser {
             DEF: () => {
                 this.OR([
                     {
-                        GATE: () => this.LA(1).tokenType === SectionHeader,
+                        GATE: () => this.LA(1).tokenType === recipeTokenVocabulary.SectionHeaderInStep,
                         ALT: () => this.SUBRULE(this.stepsSection)
                     },
                     {
@@ -103,7 +105,7 @@ export class RecipeParser extends CstParser {
     // want the section to be the parent node to the ingredients that follow, until a new section
     // header is encountered.
     ingredientsSection = this.RULE(RuleName.INGREDIENTS_SECTION, () => {
-        this.CONSUME(SectionHeader)
+        this.CONSUME(recipeTokenVocabulary.SectionHeader)
         this.AT_LEAST_ONE({
             DEF: () => {
                 this.SUBRULE(this.ingredientItem)
@@ -115,7 +117,7 @@ export class RecipeParser extends CstParser {
     // want the section to be the parent node to the steps that follow, until a new section
     // header is encountered.
     stepsSection = this.RULE(RuleName.STEPS_SECTION, () => {
-        this.CONSUME(SectionHeader)
+        this.CONSUME(recipeTokenVocabulary.SectionHeaderInStep)
         this.AT_LEAST_ONE({
             DEF: () => {
                 this.SUBRULE(this.stepItem)
@@ -135,35 +137,38 @@ export class RecipeParser extends CstParser {
     // a step, possibly as a number or bulleted list
     stepItem = this.RULE(RuleName.STEP_ITEM, () => {
         this.OPTION(() => {
-            this.SUBRULE(this.listItemId)
+            this.SUBRULE(this.stepListItemId)
         })
         this.SUBRULE(this.step)
     })
 
     // the number or bullet of the list
     listItemId = this.RULE(RuleName.LIST_ITEM_ID, () => {
-        this.CONSUME(ListItemId)
+        this.CONSUME(recipeTokenVocabulary.ListItemId)
+    })
+
+    // the number or bullet of the list
+    stepListItemId = this.RULE(RuleName.STEP_LIST_ITEM_ID, () => {
+        this.CONSUME(recipeTokenVocabulary.StepListItemId)
     })
 
     // the amount (e.g. 1 cup)
     amount = this.RULE(RuleName.AMOUNT, () => {
-        this.CONSUME(Amount)
+        this.CONSUME(recipeTokenVocabulary.Amount)
     })
 
     // the ingredient (e.g. all-purpose flour)
     ingredient = this.RULE(RuleName.INGREDIENT, () => {
         this.AT_LEAST_ONE({
             DEF: () => {
-                this.CONSUME(Word)
+                this.CONSUME(recipeTokenVocabulary.Word)
             }
         })
     })
 
     // the step instructions
     step = this.RULE(RuleName.STEP, () => {
-        this.AT_LEAST_ONE({
-            DEF: () => this.CONSUME(Word)
-        })
+        this.CONSUME(recipeTokenVocabulary.Step)
     })
 }
 
@@ -175,35 +180,52 @@ export type RecipeParseResult = {
     lexingResult: ILexingResult
 }
 
-export enum ParseType {
-    RECIPE,
-    INGREDIENTS,
-    STEPS
-}
-
 export const StartRule = new Map<ParseType, RuleName>([
     [ParseType.RECIPE, RuleName.SECTIONS],
     [ParseType.INGREDIENTS, RuleName.INGREDIENTS],
     [ParseType.STEPS, RuleName.STEPS]
 ])
 
+export type ParserOptions = {
+    // Whether to parser as a recipe (ingredients and steps), a list of ingredients,
+    // or a list of steps. Specifies the parser start rule.
+    inputType?: ParseType
+    logWarnings?: boolean
+    gimmeANewParser?: boolean
+    gimmeANewLexer?: boolean
+}
+
+const defaultOptions: ParserOptions = {
+    inputType: ParseType.RECIPE,
+    logWarnings: false,
+    gimmeANewParser: false,
+    gimmeANewLexer: false
+}
+
 /**
  * Parses the recipe text (input) into a parse result that holds the concrete syntax tree (CST),
  * the parser instance, and the lexing results.
  * @param input The input text to be parsed
- * @param inputType Whether to parser as a recipe (ingredients and steps), a list of ingredients,
- * or a list of steps. Specifies the parser start rule.
+ * @param [options = defaultOptions] The parsing options that determine where the parser starts, and whether
+ * this call creates a new parser and/or a new lexer
  * @return a parse result that holds the concrete syntax tree (CST), the parser instance, and
  * the lexing results.
  */
-export function parse(input: string, inputType: ParseType = ParseType.RECIPE): RecipeParseResult {
-    if (parserInstance === undefined) {
+export function parse(input: string, options: ParserOptions = defaultOptions): RecipeParseResult {
+    const {
+        inputType = ParseType.RECIPE,
+        logWarnings = false,
+        gimmeANewParser = false,
+        gimmeANewLexer = false
+    } = options
+
+    if (parserInstance === undefined || gimmeANewParser) {
         parserInstance = new RecipeParser()
     } else {
         parserInstance.reset()
     }
 
-    const lexingResult = lex(input)
+    const lexingResult = lex(input, {inputType, logWarnings, gimmeANewLexer})
     parserInstance.input = lexingResult.tokens
 
     const cst = parserInstance[StartRule.get(inputType) || RuleName.SECTIONS]()

@@ -297,10 +297,14 @@ export function amountMatcher(text: string, startOffset: number): CustomPatternM
  * @param startOffset The current location in the text
  * @return The matcher return with a payload if found; otherwise null
  */
-export function matchSection(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+export function matchSectionIngredients(text: string, startOffset: number): CustomPatternMatcherReturn | null {
     // if the text matches an amount, then we don't want the section to match
     if (amountMatcher(text, startOffset) !== null) return null
 
+    return matchSection(text, startOffset)
+}
+
+export function matchSection(text: string, startOffset: number): CustomPatternMatcherReturn | null {
     const match = regexParts.regex("^#[ \t]*{{SectionHeader}}([ \t]*#)?").exec(text.slice(startOffset))
     if (match !== null) {
         const result: CustomPatternMatcherReturn = [match[0]]
@@ -325,6 +329,33 @@ export function matchSection(text: string, startOffset: number): CustomPatternMa
     return null
 }
 
+export function stepMatcher(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+    const step = text.slice(startOffset)
+    // is this a list item
+    if (/^[ \t]*-[ \t]+/.exec(step) != null) {
+        return null
+    }
+    const match = regexParts
+        .regex("^(({{IntegerPart}}[ \t]+)|{{IntegerPart}}{{FractionalPart}}|{{RangePart}}|{{IntegerPart}}/{{NaturalNumberPart}}|{{StepPart}})+")
+        .exec(step)
+    if (match != null) {
+        return [match[0]]
+    }
+    return null
+}
+
+export function matchListItemId(text: string, startOffset: number): CustomPatternMatcherReturn | null {
+    const match = /^(\(?\d+((\.\))|[.):]))|^[*•-](?:[ \t]+)/.exec(text.slice(startOffset))
+    if (match !== null) {
+        const result: CustomPatternMatcherReturn = [match[0]]
+        result.payload = {
+            id: match[0]
+                .replace(/[ \t]*/g, '')
+        }
+        return result
+    }
+    return null
+}
 
 /**
  * Determines whether there are just has leading spaces or tabs after the newline
@@ -334,8 +365,8 @@ export function matchSection(text: string, startOffset: number): CustomPatternMa
  */
 export function isLeadingValid(text: string, startOffset: number): boolean {
     if (startOffset === 0) return true
-    if (text.charAt(startOffset-1) === ' ' || text.charAt(startOffset-1) === '\t') {
-        return isLeadingValid(text, startOffset-1)
+    if (text.charAt(startOffset - 1) === ' ' || text.charAt(startOffset - 1) === '\t') {
+        return isLeadingValid(text, startOffset - 1)
     }
     return text.charAt(startOffset - 1) == '\n';
 }
@@ -356,7 +387,7 @@ export const INGREDIENTS_HEADER = "ingredients"
  * @return The pattern match result if found, or null otherwise
  */
 export function matchIngredientsSection(text: string, startOffset: number): CustomPatternMatcherReturn | null {
-    const result = matchSection(text, startOffset)
+    const result = matchSectionIngredients(text, startOffset)
     if (result !== null && ingredientSynonyms.indexOf(result.payload.header.toLowerCase()) >= 0) {
         result.payload = {header: INGREDIENTS_HEADER}
         return result
@@ -377,14 +408,13 @@ export const STEPS_HEADER = "steps"
  * @return The pattern match result if found, or null otherwise
  */
 export function matchStepsSection(text: string, startOffset: number): CustomPatternMatcherReturn | null {
-    const result = matchSection(text, startOffset)
+    const result = matchSectionIngredients(text, startOffset)
     if (result !== null && stepsSynonyms.indexOf(result.payload.header.toLowerCase()) >= 0) {
         result.payload = {header: STEPS_HEADER}
         return result
     }
     return null
 }
-
 
 
 /**

@@ -1,6 +1,6 @@
 import {convertText, toIngredients, toRecipe} from "./RecipeCstVisitor";
 import {Unit} from "./lexer/Units";
-import {ParseType} from "./RecipeParser";
+import {ParseType} from "./ParseType";
 
 describe("when creating an ast", () => {
     it("should be able to build recipe from ingredients", () => {
@@ -10,7 +10,6 @@ describe("when creating an ast", () => {
         1 egg`
 
         const {result: ingredients, errors} = toIngredients(input)
-        expect(true).toBeTruthy()
         expect(ingredients).toEqual([
                 {amount: {quantity: 1.5, unit: Unit.CUP}, ingredient: 'all-purpose flour', section: null, brand: null},
                 {amount: {quantity: 1, unit: Unit.TEASPOON}, ingredient: 'vanilla extract', section: null, brand: null},
@@ -83,7 +82,7 @@ describe("when creating an ast", () => {
             1 1/2 cp all-purpose flour
             1 tsp vanilla extract,
             sauce
-            1 cup milk
+            ⅛ ℓ milk
             1 egg`
 
         const {result: ingredients, errors} = toIngredients(input)
@@ -91,7 +90,7 @@ describe("when creating an ast", () => {
         expect(ingredients).toEqual([
                 {amount: {quantity: 1.5, unit: Unit.CUP}, ingredient: 'all-purpose flour', section: 'dough', brand: null},
                 {amount: {quantity: 1, unit: Unit.TEASPOON}, ingredient: 'vanilla extract', section: 'dough', brand: null},
-                {amount: {quantity: 1, unit: Unit.CUP}, ingredient: 'milk', section: 'sauce', brand: null},
+                {amount: {quantity: 0.125, unit: Unit.LITER}, ingredient: 'milk', section: 'sauce', brand: null},
                 {amount: {quantity: 1, unit: Unit.PIECE}, ingredient: 'egg', section: 'sauce', brand: null},
             ])
         expect(errors).toHaveLength(1)
@@ -146,13 +145,23 @@ describe("when creating an ast", () => {
             Chicken
             1 whole chicken
             Steps
-            Sauce
-            1. first step
-            2. second step
-            Chicken
-            3) third step
-            `
-        const {result: recipe, errors} = toRecipe(input, {deDupSections: true})
+            Spice rub
+1. 1 tbsp ground coriander
+2. 1.25 tbsp ground sweet paprika
+3. 1 tbsp ground cumin
+4. 1.5 tbsp salt
+5. 2 tbsp of New Mexico Chile powder or Chile powder of your choice
+6. Mix together and table out 2 tablespoon of spice for rubbing then put the rest into food processor
+Sauce
+7. Spice rub powder, Fresno pepper (keep some seeds to adjust the spiciness you like)
+8. add 3 cloves of garlic and 2 tbsp of sugar then pause with food processor until the sauce is chopped
+9. Pour 1/4 cup red wine and 1/3 cup lemon juice into the food processor then pulse the sauce.
+Instructions
+10. Reserve 1/4 cup of sauce with juice and brush sauce on the chicken skin. Marinate on the chicken for 45 mins.
+11. Put on a tray with salt on bottom and rack on top put chicken on the rack.
+12. Set oven at 425 degree F and roast for 45-50 mins. Then take out the chicken and brush with 2 tbsp of another layer of pepper sauce. Put back into oven for another 10-15 mins. Then take the chicken out and rest/cool for 10 mins.
+13. Add 1 cup cilantro with leaves and stems to the sauce then put one last brushing on the chicken. Ready to serve`
+        const {result: recipe, errors} = toRecipe(input, {deDupSections: true, gimmeANewLexer: true, gimmeANewParser: true})
         expect(recipe).toEqual({
             type: "recipe",
             ingredients: [
@@ -171,10 +180,19 @@ describe("when creating an ast", () => {
                 {amount: {quantity: 1, unit: Unit.PIECE}, ingredient: 'whole chicken', section: 'Chicken', brand: null},
             ],
             steps: [
-                {id: "1.", step: "first step", title: "Sauce"},
-                {id: "2.", step: "second step", title: null},
-                {id: "3)", step: "third step", title: "Chicken"},
-            ]
+                {id: "1.", step: "1 tbsp ground coriander", title: "Spice rub"},
+                {id: "2.", step: "1.25 tbsp ground sweet paprika", title: null},
+                {id: "3.", step: "1 tbsp ground cumin", title: null},
+                {id: "4.", step: "1.5 tbsp salt", title: null},
+                {id: "5.", step: "2 tbsp of New Mexico Chile powder or Chile powder of your choice", title: null},
+                {id: "6.", step: "Mix together and table out 2 tablespoon of spice for rubbing then put the rest into food processor", title: null},
+                {id: "7.", step: "Spice rub powder, Fresno pepper (keep some seeds to adjust the spiciness you like)", title: "Sauce"},
+                {id: "8.", step: "add 3 cloves of garlic and 2 tbsp of sugar then pause with food processor until the sauce is chopped", title: null},
+                {id: "9.", step: "Pour 1/4 cup red wine and 1/3 cup lemon juice into the food processor then pulse the sauce.", title: null},
+                {id: "10.", step: "Reserve 1/4 cup of sauce with juice and brush sauce on the chicken skin. Marinate on the chicken for 45 mins.", title: "Instructions"},
+                {id: "11.", step: "Put on a tray with salt on bottom and rack on top put chicken on the rack.", title: null},
+                {id: "12.", step: "Set oven at 425 degree F and roast for 45-50 mins. Then take out the chicken and brush with 2 tbsp of another layer of pepper sauce. Put back into oven for another 10-15 mins. Then take the chicken out and rest/cool for 10 mins.", title: null},
+                {id: "13.", step: "Add 1 cup cilantro with leaves and stems to the sauce then put one last brushing on the chicken. Ready to serve", title: null}            ]
         })
         expect(errors).toHaveLength(0)
     })
@@ -194,7 +212,7 @@ Chicken
 ¼ cup red wine vinegar
 1 whole chicken`
 
-        const {result: ingredients, errors} = toIngredients(input, {deDupSections: true})
+        const {result: ingredients, errors} = toIngredients(input, {deDupSections: true, gimmeANewParser: true, gimmeANewLexer: true})
         expect(errors).toHaveLength(0)
         expect(ingredients).toEqual([
             {amount: {quantity: 2, unit: Unit.TABLESPOON}, ingredient: 'sugar', section: 'Pöwder', brand: null},
