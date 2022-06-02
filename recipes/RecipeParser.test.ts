@@ -1,10 +1,11 @@
-import {parse, ParseType} from "./RecipeParser";
+import {parse} from "./RecipeParser";
 import {CstNode, IToken} from "chevrotain";
 import {INGREDIENTS_HEADER, STEPS_HEADER} from "./lexer/matchers";
+import {ParseType} from "./ParseType";
 
 describe("when parsing a recipe", () => {
     it("should work", () => {
-        const {parserInstance, cst} = parse("1 1/2 cp all purpose flour", ParseType.INGREDIENTS)
+        const {parserInstance, cst} = parse("1 1/2 cp all purpose flour", {inputType: ParseType.INGREDIENTS})
 
         expect(true).toBeTruthy()
         expect(cst).toBeDefined()
@@ -46,7 +47,7 @@ describe("when parsing a recipe", () => {
     it("should work for multiple items", () => {
         const {parserInstance, cst} = parse(
             `1 1/2 cp all-purpose flour\n1 tsp vanilla extract`,
-            ParseType.INGREDIENTS
+            {inputType: ParseType.INGREDIENTS, gimmeANewParser: true, gimmeANewLexer: true}
         )
 
         expect(true).toBeTruthy()
@@ -59,7 +60,7 @@ describe("when parsing a recipe", () => {
     it("should work for multiple items and sections", () => {
         const {parserInstance, cst} = parse(
             `1 lb sugar#dough\n1 1/2 cp all-purpose flour\n1 tsp vanilla extract#sauce#\n1 cup milk`,
-            ParseType.INGREDIENTS
+            {inputType: ParseType.INGREDIENTS, gimmeANewParser: true, gimmeANewLexer: true}
         )
 
         expect(cst.name).toBe('ingredients')
@@ -153,13 +154,12 @@ describe("when parsing a recipe", () => {
 
     })
     it("should work for multiple items and sections without #header", () => {
-        // const {parserInstance, cst} = parse(`1 lb sugar\ndough me\n1 1/2 cp all-purpose flour\n1 tsp vanilla extract\nsauce\n1 cup milk\n`)
         const {parserInstance, cst} = parse(`1 lb sugar
 dough me
 1 1/2 cp all-purpose flour
 1 tsp vanilla extract
 sauce
-1 cup milk`, ParseType.INGREDIENTS)
+1 ℓ milk`, {inputType: ParseType.INGREDIENTS, gimmeANewParser: true, gimmeANewLexer: true})
 
         expect(cst.name).toBe('ingredients')
         expect(cst.children).toBeDefined()
@@ -241,8 +241,8 @@ sauce
         expect(milkAmount.name).toBe("amount")
         expect(milkAmount.children.Amount).toHaveLength(1)
         const milkAmountToken = milkAmount.children.Amount[0] as IToken
-        expect(milkAmountToken.image).toBe("1 cup")
-        expect(milkAmountToken.payload).toEqual({quantity: [1, 1], unit: "cup"})
+        expect(milkAmountToken.image).toBe("1 ℓ")
+        expect(milkAmountToken.payload).toEqual({quantity: [1, 1], unit: "l"})
 
         const milkIngredient = milk.children.ingredient[0] as CstNode
         expect(milkIngredient.name).toBe("ingredient")
@@ -250,6 +250,28 @@ sauce
         const milkIngredientTokens = milkIngredient.children.Word as Array<IToken>
         expect(milkIngredientTokens.map(tkn => tkn.image)).toEqual(["milk"])
 
+    })
+    it("should be able to parse ingredients with list item ids", () => {
+        const input = `- 1 1/2 cp all-purpose flour
+        - 1 tsp vanilla extract,
+        2) 1 cup milk
+        1. 1 egg`
+        const {parserInstance, cst} = parse(input, {inputType: ParseType.INGREDIENTS, gimmeANewLexer: true, gimmeANewParser: true})
+
+        expect(cst).toBeDefined()
+        expect(cst.name).toBe('ingredients')
+    })
+    it("should be able to parse steps with list item ids", () => {
+        const input = `* put the flour into a large mixing bowl
+        - add the egg and whisk,
+        • add the milk and whisk,
+        2) add the vanilla extract
+        1. whisk until a smooth batter`
+        const {parserInstance, cst} = parse(input, {inputType: ParseType.STEPS, gimmeANewLexer: true, gimmeANewParser: true})
+
+        expect(cst).toBeDefined()
+        expect(cst.name).toBe('steps')
+        expect(cst.children.stepItem.length).toBe(5)
     })
     it("should work for sections containing items", () => {
         // const {parserInstance, cst} = parse(`1 lb sugar\ndough me\n1 1/2 cp all-purpose flour\n1 tsp vanilla extract\nsauce\n1 cup milk\n`)
@@ -265,14 +287,7 @@ dough
 2. second step for the Dough
 sauce
 1) saucy first step is a tough one
-* saucy2 second step is easy`
-        )
-//         const {parserInstance, cst} = parse(`dough me
-// 1 1/2 cp all-purpose flour
-// 1 tsp vanilla extract
-// sauce
-// 1 cup milk`
-//         )
+* saucy2 second step is easy`, {gimmeANewLexer: true, gimmeANewParser: true})
 
         expect(cst.name).toBe('sections')
         expect(cst.children).toBeDefined()
@@ -384,49 +399,73 @@ sauce
         /* STEPS - DOUGH */
         const stepsDough = stepSections[0] as CstNode
         expect(stepsDough.name).toBe("stepsSection")
-        expect(stepsDough.children.SectionHeader).toHaveLength(1)
+        expect(stepsDough.children.SectionHeaderInStep).toHaveLength(1)
         expect(stepsDough.children.stepItem).toHaveLength(2)
 
         const doughStepsItems = stepsDough.children.stepItem as Array<CstNode>
         const doughStepOne = doughStepsItems[0] as CstNode
-        expect((doughStepOne.children.listItemId[0] as CstNode).name).toBe("listItemId")
-        const doughStepOneListItem = doughStepOne.children.listItemId[0] as CstNode
-        expect((doughStepOneListItem.children.ListItemId[0] as IToken).image).toBe("1.")
+        expect((doughStepOne.children.stepListItemId[0] as CstNode).name).toBe("stepListItemId")
+        const doughStepOneListItem = doughStepOne.children.stepListItemId[0] as CstNode
+        expect((doughStepOneListItem.children.StepListItemId[0] as IToken).image).toBe("1.")
 
-        const doughStepOneStepItem = (doughStepOne.children.step[0] as CstNode).children.Word as Array<IToken>
+        const doughStepOneStepItem = (doughStepOne.children.step[0] as CstNode).children.Step as Array<IToken>
         expect(doughStepOneStepItem.map(tkn => tkn.image).join(" ")).toBe("first step for the Dough")
 
         const doughStepTwo = doughStepsItems[1] as CstNode
-        expect((doughStepTwo.children.listItemId[0] as CstNode).name).toBe("listItemId")
-        const doughStepTwoListItem = doughStepTwo.children.listItemId[0] as CstNode
-        expect((doughStepTwoListItem.children.ListItemId[0] as IToken).image).toBe("2.")
+        expect((doughStepTwo.children.stepListItemId[0] as CstNode).name).toBe("stepListItemId")
+        const doughStepTwoListItem = doughStepTwo.children.stepListItemId[0] as CstNode
+        expect((doughStepTwoListItem.children.StepListItemId[0] as IToken).image).toBe("2.")
 
-        const doughStepTwoStepItem = (doughStepTwo.children.step[0] as CstNode).children.Word as Array<IToken>
+        const doughStepTwoStepItem = (doughStepTwo.children.step[0] as CstNode).children.Step as Array<IToken>
         expect(doughStepTwoStepItem.map(tkn => tkn.image).join(" ")).toBe("second step for the Dough")
 
         /* STEPS - SAUCE */
         const stepsSauce = stepSections[1] as CstNode
         expect(stepsSauce.name).toBe("stepsSection")
-        expect(stepsSauce.children.SectionHeader).toHaveLength(1)
+        expect(stepsSauce.children.SectionHeaderInStep).toHaveLength(1)
         expect(stepsSauce.children.stepItem).toHaveLength(2)
 
         const sauceStepsItems = stepsSauce.children.stepItem as Array<CstNode>
         const sauceStepOne = sauceStepsItems[0] as CstNode
 
-        expect((sauceStepOne.children.listItemId[0] as CstNode).name).toBe("listItemId")
+        expect((sauceStepOne.children.stepListItemId[0] as CstNode).name).toBe("stepListItemId")
         expect(sauceStepOne.name).toBe("stepItem")
-        const sauceStepOneListItem = sauceStepOne.children.listItemId[0] as CstNode
-        expect((sauceStepOneListItem.children.ListItemId[0] as IToken).image).toBe("1)")
+        const sauceStepOneListItem = sauceStepOne.children.stepListItemId[0] as CstNode
+        expect((sauceStepOneListItem.children.StepListItemId[0] as IToken).image).toBe("1)")
 
-        const sauceStepOneStepItem = (sauceStepOne.children.step[0] as CstNode).children.Word as Array<IToken>
+        const sauceStepOneStepItem = (sauceStepOne.children.step[0] as CstNode).children.Step as Array<IToken>
         expect(sauceStepOneStepItem.map(tkn => tkn.image).join(" ")).toBe("saucy first step is a tough one")
 
         const sauceStepTwo = sauceStepsItems[1] as CstNode
-        expect((sauceStepTwo.children.listItemId[0] as CstNode).name).toBe("listItemId")
-        const sauceStepTwoListItem = sauceStepTwo.children.listItemId[0] as CstNode
-        expect((sauceStepTwoListItem.children.ListItemId[0] as IToken).image).toBe("*")
+        expect((sauceStepTwo.children.stepListItemId[0] as CstNode).name).toBe("stepListItemId")
+        const sauceStepTwoListItem = sauceStepTwo.children.stepListItemId[0] as CstNode
+        expect((sauceStepTwoListItem.children.StepListItemId[0] as IToken).image).toBe("* ")
+        expect((sauceStepTwoListItem.children.StepListItemId[0] as IToken).payload.id).toBe("*")
 
-        const sauceStepTwoStepItem = (sauceStepTwo.children.step[0] as CstNode).children.Word as Array<IToken>
+        const sauceStepTwoStepItem = (sauceStepTwo.children.step[0] as CstNode).children.Step as Array<IToken>
         expect(sauceStepTwoStepItem.map(tkn => tkn.image).join(" ")).toBe("saucy2 second step is easy")
+    })
+    it("should be able to parse steps with punctuation", () => {
+        const input = `Steps
+Spice rub
+1. 1 tbsp ground coriander
+2. 1.25 tbsp ground sweet paprika
+3. 1 tbsp ground cumin
+4. 1.5 tbsp salt
+5. 2 tbsp of New Mexico Chile powder or Chile powder of your choice
+6. Mix together and table out 2 tablespoon of spice for rubbing then put the rest into food processor
+Sauce
+7. Spice rub powder, Fresno pepper (keep some seeds to adjust the spiciness you like)
+8. add 3 cloves of garlic  and 2 tbsp of sugar then pause with food processor until the sauce is chopped
+9. Pour 1/4 cup red wine and 1/3 cup lemon juice into the food processor then pulse the sauce.
+Instructions
+10. Reserve 1/4 cup of sauce with juice and brush sauce on the chicken skin. Marinate on the chicken for 45 mins.
+11. Put on a tray with salt on bottom and rack on top put chicken on the rack.
+12. Set oven at 425 degree F and roast for 45-50 mins. Then take out the chicken and brush with 2 tbsp of another layer of pepper sauce. Put back into oven for another 10-15 mins. Then take the chicken out and rest/cool for 10 mins.
+13. Add 1 cup cilantro with leaves and stems to the sauce then put one last brushing on the chicken. Ready to serve
+`
+        const {parserInstance, cst} = parse(input)
+
+        expect(cst.name).toBe("sections")
     })
 })
